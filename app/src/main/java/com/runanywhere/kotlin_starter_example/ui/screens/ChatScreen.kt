@@ -55,8 +55,11 @@ import com.runanywhere.kotlin_starter_example.ui.theme.PrimaryDark
 import com.runanywhere.kotlin_starter_example.ui.theme.PrimaryMid
 import com.runanywhere.kotlin_starter_example.ui.theme.SurfaceCard
 import com.runanywhere.kotlin_starter_example.ui.theme.TextMuted
+import androidx.compose.ui.platform.LocalContext
 import com.runanywhere.kotlin_starter_example.ui.theme.TextPrimary
+import com.runanywhere.kotlin_starter_example.utils.LLMPerformanceBooster
 import com.runanywhere.sdk.public.extensions.chat
+import com.runanywhere.sdk.public.extensions.generate
 import kotlinx.coroutines.launch
 
 data class ChatMessage(
@@ -75,10 +78,11 @@ fun ChatScreen(
     var messages by remember { mutableStateOf(listOf<ChatMessage>()) }
     var inputText by remember { mutableStateOf("") }
     var isGenerating by remember { mutableStateOf(false) }
-    
+
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
-    
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -115,7 +119,7 @@ fun ChatScreen(
                         downloadProgress = modelService.llmDownloadProgress,
                         onLoadClick = { modelService.downloadAndLoadLLM() }
                     )
-                    
+
                     modelService.errorMessage?.let { error ->
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
@@ -127,7 +131,7 @@ fun ChatScreen(
                     }
                 }
             }
-            
+
             // Chat messages
             LazyColumn(
                 state = listState,
@@ -143,12 +147,12 @@ fun ChatScreen(
                         EmptyStateMessage()
                     }
                 }
-                
+
                 items(messages) { message ->
                     ChatMessageBubble(message)
                 }
             }
-            
+
             // Input section
             if (modelService.isLLMLoaded) {
                 Surface(
@@ -178,23 +182,42 @@ fun ChatScreen(
                             shape = RoundedCornerShape(12.dp),
                             maxLines = 4
                         )
-                        
+
                         Spacer(modifier = Modifier.width(8.dp))
-                        
+
                         FloatingActionButton(
                             onClick = {
                                 if (inputText.isNotBlank() && !isGenerating) {
                                     val userMessage = inputText
                                     messages = messages + ChatMessage(userMessage, isUser = true)
                                     inputText = ""
-                                    
+
                                     scope.launch {
                                         isGenerating = true
                                         listState.animateScrollToItem(messages.size)
-                                        
+
                                         try {
-                                            val response = com.runanywhere.sdk.public.RunAnywhere.chat(userMessage)
-                                            messages = messages + ChatMessage(response, isUser = false)
+                                            // Free native memory: unload STT/TTS before LLM generation
+                                            if (modelService.isSTTLoaded || modelService.isTTSLoaded) {
+                                                modelService.freeMemoryForLLM()
+                                                kotlinx.coroutines.delay(500)
+                                            }
+
+                                            // Safety: auto-switch to smaller model if current one is too large
+                                            modelService.ensureSafeModelForGeneration(context)
+
+                                            val adaptiveMaxTokens = LLMPerformanceBooster.getRecommendedMaxTokens(context)
+                                            val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                                com.runanywhere.sdk.public.RunAnywhere.generate(
+                                                    userMessage,
+                                                    com.runanywhere.sdk.public.extensions.LLM.LLMGenerationOptions(
+                                                        maxTokens = adaptiveMaxTokens,
+                                                        temperature = 0.65f,
+                                                        topP = 0.9f
+                                                    )
+                                                )
+                                            }
+                                            messages = messages + ChatMessage(result.text, isUser = false)
                                             listState.animateScrollToItem(messages.size)
                                         } catch (e: Exception) {
                                             messages = messages + ChatMessage(
@@ -203,6 +226,9 @@ fun ChatScreen(
                                             )
                                         } finally {
                                             isGenerating = false
+                                            // Reload STT/TTS after generation
+                                            if (!modelService.isSTTLoaded) modelService.downloadAndLoadSTT()
+                                            if (!modelService.isTTSLoaded) modelService.downloadAndLoadTTS()
                                         }
                                     }
                                 }
@@ -271,7 +297,7 @@ private fun ChatMessageBubble(message: ChatMessage) {
             )
             Spacer(modifier = Modifier.width(8.dp))
         }
-        
+
         Card(
             modifier = Modifier.widthIn(max = 280.dp),
             shape = RoundedCornerShape(
@@ -291,7 +317,7 @@ private fun ChatMessageBubble(message: ChatMessage) {
                 color = if (message.isUser) Color.White else TextPrimary
             )
         }
-        
+
         if (message.isUser) {
             Spacer(modifier = Modifier.width(8.dp))
             Icon(

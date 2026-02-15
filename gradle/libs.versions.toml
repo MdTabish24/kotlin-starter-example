@@ -12,10 +12,13 @@ composeBom = "2024.12.01"
 lifecycleViewmodelCompose = "2.8.7"
 navigationCompose = "2.8.5"
 coroutines = "1.9.0"
-runanywhere = "0.1.5-SNAPSHOT"
+runanywhere = "0.16.1"
+poi = "5.2.5"
+itext = "8.0.2"
+mlkitTextRecognition = "16.0.1"
 
 [libraries]
-# RunAnywhere SDK (use 0.16.x for production, 0.1.5-SNAPSHOT for local development)
+# RunAnywhere SDK - published on Maven Central under io.github.sanchitmonga22
 runanywhere-sdk = { group = "io.github.sanchitmonga22", name = "runanywhere-sdk-android", version.ref = "runanywhere" }
 runanywhere-llamacpp = { group = "io.github.sanchitmonga22", name = "runanywhere-llamacpp-android", version.ref = "runanywhere" }
 runanywhere-onnx = { group = "io.github.sanchitmonga22", name = "runanywhere-onnx-android", version.ref = "runanywhere" }
@@ -41,6 +44,13 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 # Coroutines
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "coroutines" }
+
+# Document parsing
+poi-ooxml = { group = "org.apache.poi", name = "poi-ooxml", version.ref = "poi" }
+itext-kernel = { group = "com.itextpdf", name = "kernel", version.ref = "itext" }
+itext-layout = { group = "com.itextpdf", name = "layout", version.ref = "itext" }
+mlkit-text-recognition = { group = "com.google.mlkit", name = "text-recognition", version.ref = "mlkitTextRecognition" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

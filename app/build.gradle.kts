@@ -48,6 +48,14 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/DEPENDENCIES"
+            excludes += "/META-INF/LICENSE"
+            excludes += "/META-INF/LICENSE.txt"
+            excludes += "/META-INF/license.txt"
+            excludes += "/META-INF/NOTICE"
+            excludes += "/META-INF/NOTICE.txt"
+            excludes += "/META-INF/notice.txt"
+            excludes += "/META-INF/*.kotlin_module"
         }
     }
 }
@@ -73,11 +81,18 @@ dependencies {
     // Coroutines
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.play.services)
     
     // RunAnywhere SDK
     implementation(libs.runanywhere.sdk)
     implementation(libs.runanywhere.llamacpp)
     implementation(libs.runanywhere.onnx)
+    
+    // Document Parsing
+    implementation(libs.poi.ooxml)
+    implementation(libs.itext.kernel)
+    implementation(libs.itext.layout)
+    implementation(libs.mlkit.text.recognition)
     
     // Testing
     testImplementation(libs.junit)

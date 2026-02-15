@@ -14,10 +14,9 @@ pluginManagement {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {
-        // Local Maven for development (SDK with new streamVoiceSession API)
-        mavenLocal()
         google()
         mavenCentral()
+        mavenLocal()
         // JitPack for transitive dependencies (android-vad, PRDownloader)
         maven { url = uri("https://jitpack.io") }
     }
