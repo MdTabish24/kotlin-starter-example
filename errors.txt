@@ -1,71 +1,227 @@
 ﻿====================================================
   YouLearn Error Log
-  2026-02-15 22:34:44
+  2026-02-19 16:20:37
 ====================================================
 
-Started: 2026-02-15 22:34:44
-App PID: 17823
+Started: 2026-02-19 16:20:37
+App PID: 3306
 
-[WARN] 02-15 22:35:13.783 W/libc    (17823): Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-[WARN] 02-15 22:35:13.776 W/starter_example(17823): type=1400 audit(0.0:1694514): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=16406 scontext=u:r:untrusted_app:s0:c12,c258,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.runanywhere.kotlin_starter_example
-[ERROR] 02-15 22:35:13.791 E/OpenGLRenderer(17823): Unable to match the desired swap behavior.
-[ERROR] 02-15 22:35:13.891 E/LB      (17823): fail to open node: No such file or directory
-[ERROR] 02-15 22:35:13.893 E/FileUtils(17823): err write to mi_exception_log
-[ERROR] 02-15 22:35:13.893 E/FileUtils(17823): err write to mi_exception_log
-[ERROR] 02-15 22:35:13.893 E/FileUtils(17823): err write to mi_exception_log
-[ERROR] 02-15 22:35:13.937 E/FileUtils(17823): err write to mi_exception_log
-[ERROR] 02-15 22:35:13.938 E/FileUtils(17823): err write to mi_exception_log
-[ERROR] 02-15 22:35:13.975 E/FileUtils(17823): err write to mi_exception_log
-[ERROR] 02-15 22:35:14.065 E/BinderMonitor(17823): err open binder_delay errno=2
-[ERROR] 02-15 22:35:14.066 E/FileUtils(17823): err write to mi_exception_log
-[ERROR] 02-15 22:35:14.066 E/FileUtils(17823): err write to mi_exception_log
-[ERROR] 02-15 22:35:14.539 I/System.out(17823): [DEBUG] [CppBridgeTelemetry] [Native] Response: [{"id":"386b30f1-721c-439e-8b66-50b0a7334dff","sdk_event_id":"a098eeae-394d-414d-9ec2-055f16f359cd","event_type":"sdk.init.completed","event_timestamp":"2026-02-15T17:05:13.146+00:00","created_at":"2026-02-15T17:05:13.146+00:00","modality":"system","device_id":"cd210fa2-fb04-4a31-b6e4-56fc0169e623","session_id":null,"model_id":null,"model_name":null,"framework":null,"device":"22111317I","os_version":"14","platform":"android","sdk_version":"0.1.0","processing_time_ms":null,"success":null,"error_message":null,"error_code":null,"input_tokens":null,"output_tokens":null,"total_tokens":null,"tokens_per_second":null,"time_to_first_token_ms":null,"prompt_eval_time_ms":null,"generation_time_ms":null,"context_length":null,"temperature":null,"max_tokens":null,"audio_duration_ms":null,"real_time_factor":null,"word_count":null,"confidence":null,"language":null,"is_streaming":null,"segment_index":null,"character_count":null,"characters_per_second":null,"audio_size_bytes":null,"sample_rate":null,"voice":null,"output_duration_ms":null,"migrated_from_v1":false,"v1_source_id":null,"synced_from_prod":false,"api_key_id":null,"org_id":null,"received_at":null}]
-[ERROR] 02-15 22:35:15.348 E/FileUtils(17823): err write to mi_exception_log
-[ERROR] 02-15 22:35:15.367 E/FileUtils(17823): err write to mi_exception_log
-[ERROR] 02-15 22:35:15.369 E/FileUtils(17823): err write to mi_exception_log
-[ERROR] 02-15 22:35:15.463 E/OpenGLRenderer(17823): Unable to match the desired swap behavior.
-[ERROR] 02-15 22:35:15.470 E/FileUtils(17823): err write to mi_exception_log
-[ERROR] 02-15 22:35:15.471 E/FileUtils(17823): err write to mi_exception_log
-[WARN] 02-15 22:35:15.594 W/WindowOnBackDispatcher(17823): sendCancelIfRunning: isInProgress=falsecallback=android.view.ViewRootImpl$$ExternalSyntheticLambda23@93b04b9
-[ERROR] 02-15 22:35:15.623 E/FileUtils(17823): err write to mi_exception_log
-[ERROR] 02-15 22:35:15.650 D/ActivityThread(17823): Fail to check app heapsize due to java.lang.NoSuchMethodException: dalvik.system.VMRuntime.getBlockingGcCountForAlloc []
-[ERROR] 02-15 22:35:15.886 E/FileUtils(17823): err write to mi_exception_log
-[WARN] 02-15 22:35:16.475 W/libc    (17823): Access denied finding property "vendor.display.enable_optimal_refresh_rate"
-[WARN] 02-15 22:35:16.468 W/starter_example(17823): type=1400 audit(0.0:1694525): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=16406 scontext=u:r:untrusted_app:s0:c12,c258,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.runanywhere.kotlin_starter_example
-[ERROR] 02-15 22:35:16.480 E/OpenGLRenderer(17823): Unable to match the desired swap behavior.
-[ERROR] 02-15 22:35:16.565 E/FileUtils(17823): err write to mi_exception_log
-[ERROR] 02-15 22:35:16.566 E/FileUtils(17823): err write to mi_exception_log
-[ERROR] 02-15 22:35:16.567 E/FileUtils(17823): err write to mi_exception_log
-[ERROR] 02-15 22:35:16.581 E/FileUtils(17823): err write to mi_exception_log
-[ERROR] 02-15 22:35:17.362 I/System.out(17823): [DEBUG] [CppBridgeTelemetry] [Native] Response: [{"id":"554e1efa-08ee-497e-8769-112bb71853d8","sdk_event_id":"071ee52f-5f6a-48ff-8af8-193fc1f2fa98","event_type":"sdk.init.started","event_timestamp":"2026-02-15T17:05:13.144+00:00","created_at":"2026-02-15T17:05:13.144+00:00","modality":"system","device_id":"cd210fa2-fb04-4a31-b6e4-56fc0169e623","session_id":null,"model_id":null,"model_name":null,"framework":null,"device":"22111317I","os_version":"14","platform":"android","sdk_version":"0.1.0","processing_time_ms":null,"success":null,"error_message":null,"error_code":null,"input_tokens":null,"output_tokens":null,"total_tokens":null,"tokens_per_second":null,"time_to_first_token_ms":null,"prompt_eval_time_ms":null,"generation_time_ms":null,"context_length":null,"temperature":null,"max_tokens":null,"audio_duration_ms":null,"real_time_factor":null,"word_count":null,"confidence":null,"language":null,"is_streaming":null,"segment_index":null,"character_count":null,"characters_per_second":null,"audio_size_bytes":null,"sample_rate":null,"voice":null,"output_duration_ms":null,"migrated_from_v1":false,"v1_source_id":null,"synced_from_prod":false,"api_key_id":null,"org_id":null,"received_at":null}]
-[WARN] 02-15 22:35:18.089 W/MirrorManager(17823): this model don't Support
-[ERROR] 02-15 22:35:18.876 I/System.out(17823): [DEBUG] [CppBridgeTTS] [Native] State changed: LOADING -> ERROR
-[ERROR] 02-15 22:35:18.877 I/System.out(17823): [ERROR] [CppBridgeTTS] [Native] Failed to load model: vits-piper-en_US-lessac-medium (error: -422)
-[ERROR] 02-15 22:35:18.877 I/System.out(17823): [ERROR] [TTS] Failed to load TTS voice 'vits-piper-en_US-lessac-medium' (error code: -422)
-[WARN] 02-15 22:35:18.968 W/sherpa-onnx(17823): /home/runner/work/sherpa-onnx/sherpa-onnx/sherpa-onnx/c-api/c-api.cc:GetOfflineRecognizerConfig:549
-[WARN] 02-15 22:35:18.968 W/sherpa-onnx(17823): OfflineRecognizerConfig(feat_config=FeatureExtractorConfig(sampling_rate=16000, feature_dim=80, low_freq=20, high_freq=-400, dither=0, normalize_samples=True, snip_edges=False), model_config=OfflineModelConfig(transducer=OfflineTransducerModelConfig(encoder_filename="", decoder_filename="", joiner_filename=""), paraformer=OfflineParaformerModelConfig(model=""), nemo_ctc=OfflineNemoEncDecCtcModelConfig(model=""), whisper=OfflineWhisperModelConfig(encoder="/data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/stt/sherpa-onnx-whisper-tiny.en/tiny.en-encoder.int8.onnx", decoder="/data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/stt/sherpa-onnx-whisper-tiny.en/tiny.en-decoder.int8.onnx", language="en", task="transcribe", tail_paddings=-1), fire_red_asr=OfflineFireRedAsrModelConfig(encoder="", decoder=""), tdnn=OfflineTdnnModelConfig(model=""), zipformer_ctc=OfflineZipformerCtcModelConfig(model=""), wenet_ctc=OfflineWenetCtcModelConfig(model=""), sense_voice=Offlin
-[WARN] 02-15 22:35:19.086 W/libc    (17823): Access denied finding property "ro.hardware.chipname"
-[WARN] 02-15 22:35:19.205 W/sherpa-onnx(17823): /home/runner/work/sherpa-onnx/sherpa-onnx/sherpa-onnx/csrc/offline-whisper-model.cc:InitEncoder:259
-[WARN] 02-15 22:35:19.205 W/sherpa-onnx(17823): ---encoder---
-[WARN] 02-15 22:35:19.205 W/sherpa-onnx(17823): no_timestamps=50362
-[WARN] 02-15 22:35:19.205 W/sherpa-onnx(17823): sot_lm=50359
-[WARN] 02-15 22:35:19.205 W/sherpa-onnx(17823): sot_prev=50360
-[WARN] 02-15 22:35:19.205 W/sherpa-onnx(17823): transcribe=50358
-[WARN] 02-15 22:35:19.205 W/sherpa-onnx(17823): blank_id=220
-[WARN] 02-15 22:35:19.205 W/sherpa-onnx(17823): eot=50256
-[WARN] 02-15 22:35:19.205 W/sherpa-onnx(17823): n_text_state=384
-[WARN] 02-15 22:35:19.205 W/sherpa-onnx(17823): sot_index=0
-[WARN] 02-15 22:35:19.205 W/sherpa-onnx(17823): sot=50257
-[WARN] 02-15 22:35:19.205 W/sherpa-onnx(17823): sot_sequence=50257
-[WARN] 02-15 22:35:19.205 W/sherpa-onnx(17823): n_text_head=6
-[WARN] 02-15 22:35:19.205 W/sherpa-onnx(17823): n_text_layer=4
-[WARN] 02-15 22:35:19.205 W/sherpa-onnx(17823): all_language_tokens=50283,50336,50306,50315,50343,50291,50262,50296,50281,50332,50293,50290,50265,50303,50280,50266,50310,50339,50314,50259,50288,50353,50329,50319,50307,50354,50298,50308,50325,50261,50272,50275,50323,50338,50300,50305,50317,50295,50264,50320,50309,50286,50260,50316,50294,50285,50326,50355,50321,50263,50274,50312,50279,50318,50345,50301,50334,50333,50276,50269,50270,50335,50327,50330,50346,50278,50352,50284,50277,50350,50311,50289,50347,50304,50356,50271,50302,50342,50258,50331,50273,50328,50267,50268,50282,50344,50341,50299,50351,50324,50348,50287,50340,50313,50349,50297,50322,50337,50292
-[WARN] 02-15 22:35:19.205 W/sherpa-onnx(17823): onnx.infer=onnxruntime.quant
-[WARN] 02-15 22:35:19.205 W/sherpa-onnx(17823): n_text_ctx=448
-[WARN] 02-15 22:35:19.205 W/sherpa-onnx(17823): n_audio_head=6
-[WARN] 02-15 22:35:19.205 W/sherpa-onnx(17823): n_audio_ctx=1500
-[WARN] 02-15 22:35:19.205 W/sherpa-onnx(17823): is_multilingual=0
-[WARN] 02-15 22:35:19.205 W/sherpa-onnx(17823): non_speech_tokens=1,2,7,8,9,10,14,25,26,27,28,29,31,58,59,60,61,62,63,90,91,92,93,357,366,438,532,685,705,796,930,1058,1220,12
-[WARN] 02-15 22:35:20.140 W/starter_example(17823): Cleared Reference was only reachable from finalizer (only reported once)
-[ERROR] 02-15 22:35:21.472 I/System.out(17823): [DEBUG] [CppBridgeTelemetry] [Native] Response: [{"id":"7993c0a0-02c9-4aee-858e-f153b41bb190","sdk_event_id":"ba4687fd-5112-4afe-8f31-f47e7d73aaf1","event_type":"model.download.started","event_timestamp":"2026-02-15T17:05:20.334+00:00","created_at":"2026-02-15T17:05:20.334+00:00","modality":"model","device_id":"cd210fa2-fb04-4a31-b6e4-56fc0169e623","session_id":null,"model_id":null,"model_name":null,"framework":null,"device":"22111317I","os_version":"14","platform":"android","sdk_version":"0.1.0","processing_time_ms":null,"success":null,"error_message":null,"error_code":null,"input_tokens":null,"output_tokens":null,"total_tokens":null,"tokens_per_second":null,"time_to_first_token_ms":null,"prompt_eval_time_ms":null,"generation_time_ms":null,"context_length":null,"temperature":null,"max_tokens":null,"audio_duration_ms":null,"real_time_factor":null,"word_count":null,"confidence":null,"language":null,"is_streaming":null,"segment_index":null,"character_count":null,"characters_per_second":null,"audio_size_bytes":null,"sample_rate":null,"voice":null,"output_duration_ms":null,"migrated_from_v1":false,"v1_source_id":null,"synced_from_prod":false,"api_key_id":null,"org_id":null,"received_at":null}]
-[WARN] 02-15 22:35:44.455 W/RenderInspector(17823): QueueBuffer time out on com.runanywhere.kotlin_starter_example/com.runanywhere.kotlin_starter_example.MainActivity, count=1, avg=9 ms, max=9 ms.
+[ERROR] 02-19 16:21:08.505 E/LB      ( 3306): fail to open node: No such file or directory
+[ERROR] 02-19 16:21:08.508 E/FileUtils( 3306): err write to mi_exception_log
+[ERROR] 02-19 16:21:08.508 E/FileUtils( 3306): err write to mi_exception_log
+[ERROR] 02-19 16:21:08.508 E/FileUtils( 3306): err write to mi_exception_log
+[AI] 02-19 16:21:08.529 D/ModelService( 3306): Active LLM: smollm2-360m-instruct-q8_0 (deviceRAM: 5461MB)
+[ERROR] 02-19 16:21:08.540 I/System.out( 3306): [DEBUG] [CppBridgeTelemetry] [Native] Response: [{"id":"0ac22511-907e-45e0-a533-46e27f41e7bb","sdk_event_id":"57c83995-d4da-4630-a99f-038c2e5f79f6","event_type":"sdk.init.started","event_timestamp":"2026-02-19T10:51:07.721+00:00","created_at":"2026-02-19T10:51:07.721+00:00","modality":"system","device_id":"cd210fa2-fb04-4a31-b6e4-56fc0169e623","session_id":null,"model_id":null,"model_name":null,"framework":null,"device":"22111317I","os_version":"14","platform":"android","sdk_version":"0.1.0","processing_time_ms":null,"success":null,"error_message":null,"error_code":null,"input_tokens":null,"output_tokens":null,"total_tokens":null,"tokens_per_second":null,"time_to_first_token_ms":null,"prompt_eval_time_ms":null,"generation_time_ms":null,"context_length":null,"temperature":null,"max_tokens":null,"audio_duration_ms":null,"real_time_factor":null,"word_count":null,"confidence":null,"language":null,"is_streaming":null,"segment_index":null,"character_count":null,"characters_per_second":null,"audio_size_bytes":null,"sample_rate":null,"voice":null,"output_duration_ms":null,"migrated_from_v1":false,"v1_source_id":null,"synced_from_prod":false,"api_key_id":null,"org_id":null,"received_at":null}]
+[ERROR] 02-19 16:21:08.556 E/FileUtils( 3306): err write to mi_exception_log
+[ERROR] 02-19 16:21:08.871 E/FileUtils( 3306): err write to mi_exception_log
+[WARN] 02-19 16:21:09.633 W/MirrorManager( 3306): this model don't Support
+[AI] 02-19 16:21:10.166 I/System.out( 3306): [DEBUG] [CppBridge/CppBridgeModelRegistry] [Native] Scanning for previously downloaded models...
+[AI] 02-19 16:21:10.171 I/System.out( 3306): [DEBUG] [CppBridge/CppBridgeModelRegistry] [Native] Scanning type directory: /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/llm
+[AI] 02-19 16:21:10.172 I/System.out( 3306): [DEBUG] [CppBridge/CppBridgeModelRegistry] [Native] Found: smollm2-360m-instruct-q8_0 (isDir=false, isFile=true)
+[AI] 02-19 16:21:10.176 I/System.out( 3306): [DEBUG] [CppBridge/CppBridgeModelRegistry] [Native] Updating download status: smollm2-360m-instruct-q8_0 -> /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/llm/smollm2-360m-instruct-q8_0
+[AI] 02-19 16:21:10.176 I/RACCommonsJNI( 3306): Updating download status: smollm2-360m-instruct-q8_0 -> /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/llm/smollm2-360m-instruct-q8_0
+[AI] 02-19 16:21:10.176 I/System.out( 3306): [DEBUG] [CppBridge/CppBridgeModelRegistry] [Native] Restored downloaded model: smollm2-360m-instruct-q8_0 at /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/llm/smollm2-360m-instruct-q8_0
+[AI] 02-19 16:21:10.177 I/System.out( 3306): [DEBUG] [CppBridge/CppBridgeModelRegistry] [Native] Found: smollm2-1.7b-instruct-q4_k_m (isDir=false, isFile=true)
+[AI] 02-19 16:21:10.178 I/System.out( 3306): [DEBUG] [CppBridge/CppBridgeModelRegistry] [Native] Updating download status: smollm2-1.7b-instruct-q4_k_m -> /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/llm/smollm2-1.7b-instruct-q4_k_m
+[AI] 02-19 16:21:10.178 I/RACCommonsJNI( 3306): Updating download status: smollm2-1.7b-instruct-q4_k_m -> /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/llm/smollm2-1.7b-instruct-q4_k_m
+[AI] 02-19 16:21:10.178 I/System.out( 3306): [DEBUG] [CppBridge/CppBridgeModelRegistry] [Native] Restored downloaded model: smollm2-1.7b-instruct-q4_k_m at /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/llm/smollm2-1.7b-instruct-q4_k_m
+[AI] 02-19 16:21:10.179 I/System.out( 3306): [DEBUG] [CppBridge/CppBridgeModelRegistry] [Native] Updating download status: Llama-3.2-1B-Instruct-Q4_K_M -> /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/llm/Llama-3.2-1B-Instruct-Q4_K_M
+[AI] 02-19 16:21:10.179 I/RACCommonsJNI( 3306): Updating download status: Llama-3.2-1B-Instruct-Q4_K_M -> /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/llm/Llama-3.2-1B-Instruct-Q4_K_M
+[AI] 02-19 16:21:10.179 I/System.out( 3306): [DEBUG] [CppBridge/CppBridgeModelRegistry] [Native] Restored downloaded model: Llama-3.2-1B-Instruct-Q4_K_M at /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/llm/Llama-3.2-1B-Instruct-Q4_K_M
+[AI] 02-19 16:21:10.180 I/System.out( 3306): [DEBUG] [CppBridge/CppBridgeModelRegistry] [Native] Updating download status: Qwen2.5-1.5B-Instruct-Q4_K_M -> /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/llm/Qwen2.5-1.5B-Instruct-Q4_K_M
+[AI] 02-19 16:21:10.180 I/RACCommonsJNI( 3306): Updating download status: Qwen2.5-1.5B-Instruct-Q4_K_M -> /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/llm/Qwen2.5-1.5B-Instruct-Q4_K_M
+[AI] 02-19 16:21:10.181 I/System.out( 3306): [DEBUG] [CppBridge/CppBridgeModelRegistry] [Native] Restored downloaded model: Qwen2.5-1.5B-Instruct-Q4_K_M at /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/llm/Qwen2.5-1.5B-Instruct-Q4_K_M
+[AI] 02-19 16:21:10.182 I/System.out( 3306): [DEBUG] [CppBridge/CppBridgeModelRegistry] [Native] Scanning type directory: /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/stt
+[AI] 02-19 16:21:10.183 I/System.out( 3306): [DEBUG] [CppBridge/CppBridgeModelRegistry] [Native] Updating download status: sherpa-onnx-whisper-tiny.en -> /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/stt/sherpa-onnx-whisper-tiny.en
+[AI] 02-19 16:21:10.183 I/RACCommonsJNI( 3306): Updating download status: sherpa-onnx-whisper-tiny.en -> /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/stt/sherpa-onnx-whisper-tiny.en
+[AI] 02-19 16:21:10.183 I/System.out( 3306): [DEBUG] [CppBridge/CppBridgeModelRegistry] [Native] Restored downloaded model: sherpa-onnx-whisper-tiny.en at /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/stt/sherpa-onnx-whisper-tiny.en
+[AI] 02-19 16:21:10.184 I/System.out( 3306): [DEBUG] [CppBridge/CppBridgeModelRegistry] [Native] Scanning type directory: /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/tts
+[AI] 02-19 16:21:10.186 I/System.out( 3306): [DEBUG] [CppBridge/CppBridgeModelRegistry] [Native] Updating download status: vits-piper-en_US-lessac-medium -> /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/tts/vits-piper-en_US-lessac-medium
+[AI] 02-19 16:21:10.186 I/RACCommonsJNI( 3306): Updating download status: vits-piper-en_US-lessac-medium -> /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/tts/vits-piper-en_US-lessac-medium
+[AI] 02-19 16:21:10.186 I/System.out( 3306): [DEBUG] [CppBridge/CppBridgeModelRegistry] [Native] Restored downloaded model: vits-piper-en_US-lessac-medium at /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/tts/vits-piper-en_US-lessac-medium
+[AI] 02-19 16:21:10.186 I/System.out( 3306): [INFO] [CppBridge/CppBridgeModelRegistry] [Native] Scan complete: Restored 6 previously downloaded models
+[AI] 02-19 16:21:10.196 D/ModelService( 3306): Model vits-piper-en_US-lessac-medium downloaded: true
+[AI] 02-19 16:21:10.199 I/System.out( 3306): [DEBUG] [TTS] Loading TTS voice: vits-piper-en_US-lessac-medium
+[AI] 02-19 16:21:10.202 I/System.out( 3306): [DEBUG] [CppBridgeTTS] [Native] State changed: NOT_CREATED -> CREATED
+[AI] 02-19 16:21:10.202 I/System.out( 3306): [INFO] [CppBridgeTTS] [Native] TTS component created
+[AI] 02-19 16:21:10.203 I/System.out( 3306): [DEBUG] [CppBridgeTTS] [Native] State changed: CREATED -> LOADING
+[AI] 02-19 16:21:10.203 I/System.out( 3306): [INFO] [CppBridgeTTS] [Native] Loading model: vits-piper-en_US-lessac-medium from /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/tts/vits-piper-en_US-lessac-medium
+[AI] 02-19 16:21:10.204 I/RACCommonsJNI( 3306): racTtsComponentLoadModel path=/data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/tts/vits-piper-en_US-lessac-medium, id=vits-piper-en_US-lessac-medium, name=Piper TTS (US English - Medium)
+[WARN] 02-19 16:21:10.229 W/sherpa-onnx( 3306): /home/runner/work/sherpa-onnx/sherpa-onnx/sherpa-onnx/c-api/c-api.cc:GetOfflineTtsConfig:1280
+[WARN] 02-19 16:21:10.229 W/sherpa-onnx( 3306): OfflineTtsConfig(model=OfflineTtsModelConfig(vits=OfflineTtsVitsModelConfig(model="/data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/tts/vits-piper-en_US-lessac-medium/en_US-lessac-medium.onnx", lexicon="", tokens="/data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/tts/vits-piper-en_US-lessac-medium/tokens.txt", data_dir="/data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/tts/vits-piper-en_US-lessac-medium/espeak-ng-data", noise_scale=0.667, noise_scale_w=0.8, length_scale=1), matcha=OfflineTtsMatchaModelConfig(acoustic_model="", vocoder="", lexicon="", tokens="", data_dir="", noise_scale=0.667, length_scale=1), kokoro=OfflineTtsKokoroModelConfig(model="", voices="", tokens="", lexicon="", data_dir="", length_scale=1, lang=""), zipvoice=OfflineTtsZipvoiceModelConfig(tokens="", encoder="", decoder="", vocoder="", data_dir="", lexicon="", feat_scale=0.1, t_shift=0.5, target_rms=0.1, guidance_scale=1), kitten=OfflineTtsKittenModelCon
+[WARN] 02-19 16:21:10.561 W/libc    ( 3306): Access denied finding property "ro.hardware.chipname"
+[ERROR] 02-19 16:21:11.400 I/System.out( 3306): [DEBUG] [CppBridgeTelemetry] [Native] Response: [{"id":"fbfc27b0-8ecf-478e-b8f9-d33800002423","sdk_event_id":"f6279c0f-95c3-4bf3-98cc-9f4513b0a4f0","event_type":"sdk.init.completed","event_timestamp":"2026-02-19T10:51:07.723+00:00","created_at":"2026-02-19T10:51:07.723+00:00","modality":"system","device_id":"cd210fa2-fb04-4a31-b6e4-56fc0169e623","session_id":null,"model_id":null,"model_name":null,"framework":null,"device":"22111317I","os_version":"14","platform":"android","sdk_version":"0.1.0","processing_time_ms":null,"success":null,"error_message":null,"error_code":null,"input_tokens":null,"output_tokens":null,"total_tokens":null,"tokens_per_second":null,"time_to_first_token_ms":null,"prompt_eval_time_ms":null,"generation_time_ms":null,"context_length":null,"temperature":null,"max_tokens":null,"audio_duration_ms":null,"real_time_factor":null,"word_count":null,"confidence":null,"language":null,"is_streaming":null,"segment_index":null,"character_count":null,"characters_per_second":null,"audio_size_bytes":null,"sample_rate":null,"voice":null,"output_duration_ms":null,"migrated_from_v1":false,"v1_source_id":null,"synced_from_prod":false,"api_key_id":null,"org_id":null,"received_at":null}]
+[WARN] 02-19 16:21:11.916 W/sherpa-onnx( 3306): /home/runner/work/sherpa-onnx/sherpa-onnx/sherpa-onnx/csrc/offline-tts-vits-model.cc:Init:152
+[WARN] 02-19 16:21:11.916 W/sherpa-onnx( 3306): ---vits model---
+[WARN] 02-19 16:21:11.916 W/sherpa-onnx( 3306): sample_rate=22050
+[WARN] 02-19 16:21:11.916 W/sherpa-onnx( 3306): has_espeak=1
+[WARN] 02-19 16:21:11.916 W/sherpa-onnx( 3306): n_speakers=1
+[WARN] 02-19 16:21:11.916 W/sherpa-onnx( 3306): voice=en-us
+[WARN] 02-19 16:21:11.916 W/sherpa-onnx( 3306): model_type=vits
+[WARN] 02-19 16:21:11.916 W/sherpa-onnx( 3306): language=English
+[WARN] 02-19 16:21:11.916 W/sherpa-onnx( 3306): comment=piper
+[WARN] 02-19 16:21:11.916 W/sherpa-onnx( 3306): ----------input names----------
+[WARN] 02-19 16:21:11.916 W/sherpa-onnx( 3306): 0 input
+[WARN] 02-19 16:21:11.916 W/sherpa-onnx( 3306): 1 input_lengths
+[WARN] 02-19 16:21:11.916 W/sherpa-onnx( 3306): 2 scales
+[WARN] 02-19 16:21:11.916 W/sherpa-onnx( 3306): ----------output names----------
+[WARN] 02-19 16:21:11.916 W/sherpa-onnx( 3306): 0 output
+[WARN] 02-19 16:21:11.916 W/sherpa-onnx( 3306): 
+[AI] 02-19 16:21:11.929 I/System.out( 3306): [DEBUG] [CppBridgeTTS] [Native] State changed: LOADING -> READY
+[AI] 02-19 16:21:11.929 I/System.out( 3306): [INFO] [CppBridgeTTS] [Native] Model loaded successfully: vits-piper-en_US-lessac-medium
+[AI] 02-19 16:21:11.930 I/System.out( 3306): [DEBUG] [CppBridgeState] [Native] Component TTS state changed: NOT_CREATED -> READY
+[AI] 02-19 16:21:11.930 I/System.out( 3306): [INFO] [TTS] TTS voice loaded: vits-piper-en_US-lessac-medium
+[AI] 02-19 16:21:12.135 D/ModelService( 3306): Model sherpa-onnx-whisper-tiny.en downloaded: true
+[AI] 02-19 16:21:12.138 I/System.out( 3306): [DEBUG] [CppBridgeSTT] [Native] State changed: NOT_CREATED -> CREATED
+[AI] 02-19 16:21:12.139 I/System.out( 3306): [INFO] [CppBridgeSTT] [Native] STT component created
+[AI] 02-19 16:21:12.139 I/System.out( 3306): [DEBUG] [CppBridgeSTT] [Native] State changed: CREATED -> LOADING
+[AI] 02-19 16:21:12.139 I/System.out( 3306): [INFO] [CppBridgeSTT] [Native] Loading model: sherpa-onnx-whisper-tiny.en from /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/stt/sherpa-onnx-whisper-tiny.en
+[AI] 02-19 16:21:12.139 I/RACCommonsJNI( 3306): racSttComponentLoadModel called with handle=-5476376623044525376
+[AI] 02-19 16:21:12.139 I/RACCommonsJNI( 3306): racSttComponentLoadModel path=/data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/stt/sherpa-onnx-whisper-tiny.en, id=sherpa-onnx-whisper-tiny.en, name=Sherpa Whisper Tiny (ONNX)
+[AI] 02-19 16:21:12.139 I/RACCommonsJNI( 3306): Before load_model - STT providers: count=1, list_result=0
+[AI] 02-19 16:21:12.139 I/RACCommonsJNI( 3306):   Provider[0]: ONNXSTTService
+[WARN] 02-19 16:21:12.143 W/sherpa-onnx( 3306): /home/runner/work/sherpa-onnx/sherpa-onnx/sherpa-onnx/c-api/c-api.cc:GetOfflineRecognizerConfig:549
+[WARN] 02-19 16:21:12.143 W/sherpa-onnx( 3306): OfflineRecognizerConfig(feat_config=FeatureExtractorConfig(sampling_rate=16000, feature_dim=80, low_freq=20, high_freq=-400, dither=0, normalize_samples=True, snip_edges=False), model_config=OfflineModelConfig(transducer=OfflineTransducerModelConfig(encoder_filename="", decoder_filename="", joiner_filename=""), paraformer=OfflineParaformerModelConfig(model=""), nemo_ctc=OfflineNemoEncDecCtcModelConfig(model=""), whisper=OfflineWhisperModelConfig(encoder="/data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/stt/sherpa-onnx-whisper-tiny.en/tiny.en-encoder.int8.onnx", decoder="/data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/stt/sherpa-onnx-whisper-tiny.en/tiny.en-decoder.int8.onnx", language="en", task="transcribe", tail_paddings=-1), fire_red_asr=OfflineFireRedAsrModelConfig(encoder="", decoder=""), tdnn=OfflineTdnnModelConfig(model=""), zipformer_ctc=OfflineZipformerCtcModelConfig(model=""), wenet_ctc=OfflineWenetCtcModelConfig(model=""), sense_voice=Offlin
+[WARN] 02-19 16:21:12.411 W/sherpa-onnx( 3306): /home/runner/work/sherpa-onnx/sherpa-onnx/sherpa-onnx/csrc/offline-whisper-model.cc:InitEncoder:259
+[WARN] 02-19 16:21:12.411 W/sherpa-onnx( 3306): ---encoder---
+[WARN] 02-19 16:21:12.411 W/sherpa-onnx( 3306): no_timestamps=50362
+[WARN] 02-19 16:21:12.411 W/sherpa-onnx( 3306): sot_lm=50359
+[WARN] 02-19 16:21:12.411 W/sherpa-onnx( 3306): sot_prev=50360
+[WARN] 02-19 16:21:12.411 W/sherpa-onnx( 3306): transcribe=50358
+[WARN] 02-19 16:21:12.411 W/sherpa-onnx( 3306): blank_id=220
+[WARN] 02-19 16:21:12.411 W/sherpa-onnx( 3306): eot=50256
+[WARN] 02-19 16:21:12.411 W/sherpa-onnx( 3306): n_text_state=384
+[WARN] 02-19 16:21:12.411 W/sherpa-onnx( 3306): sot_index=0
+[WARN] 02-19 16:21:12.411 W/sherpa-onnx( 3306): sot=50257
+[WARN] 02-19 16:21:12.411 W/sherpa-onnx( 3306): sot_sequence=50257
+[WARN] 02-19 16:21:12.411 W/sherpa-onnx( 3306): n_text_head=6
+[WARN] 02-19 16:21:12.411 W/sherpa-onnx( 3306): n_text_layer=4
+[WARN] 02-19 16:21:12.411 W/sherpa-onnx( 3306): all_language_tokens=50283,50336,50306,50315,50343,50291,50262,50296,50281,50332,50293,50290,50265,50303,50280,50266,50310,50339,50314,50259,50288,50353,50329,50319,50307,50354,50298,50308,50325,50261,50272,50275,50323,50338,50300,50305,50317,50295,50264,50320,50309,50286,50260,50316,50294,50285,50326,50355,50321,50263,50274,50312,50279,50318,50345,50301,50334,50333,50276,50269,50270,50335,50327,50330,50346,50278,50352,50284,50277,50350,50311,50289,50347,50304,50356,50271,50302,50342,50258,50331,50273,50328,50267,50268,50282,50344,50341,50299,50351,50324,50348,50287,50340,50313,50349,50297,50322,50337,50292
+[WARN] 02-19 16:21:12.411 W/sherpa-onnx( 3306): onnx.infer=onnxruntime.quant
+[WARN] 02-19 16:21:12.411 W/sherpa-onnx( 3306): n_text_ctx=448
+[WARN] 02-19 16:21:12.411 W/sherpa-onnx( 3306): n_audio_head=6
+[WARN] 02-19 16:21:12.411 W/sherpa-onnx( 3306): n_audio_ctx=1500
+[WARN] 02-19 16:21:12.411 W/sherpa-onnx( 3306): is_multilingual=0
+[WARN] 02-19 16:21:12.411 W/sherpa-onnx( 3306): non_speech_tokens=1,2,7,8,9,10,14,25,26,27,28,29,31,58,59,60,61,62,63,90,91,92,93,357,366,438,532,685,705,796,930,1058,1220,12
+[AI] 02-19 16:21:12.888 D/ProfileInstaller( 3306): Installing profile for com.runanywhere.kotlin_starter_example
+[AI] 02-19 16:21:13.340 I/RACCommonsJNI( 3306): rac_stt_component_load_model returned: 0
+[AI] 02-19 16:21:13.341 I/System.out( 3306): [DEBUG] [CppBridgeSTT] [Native] State changed: LOADING -> READY
+[AI] 02-19 16:21:13.341 I/System.out( 3306): [INFO] [CppBridgeSTT] [Native] Model loaded successfully: sherpa-onnx-whisper-tiny.en
+[AI] 02-19 16:21:13.341 I/System.out( 3306): [DEBUG] [CppBridgeState] [Native] Component STT state changed: NOT_CREATED -> READY
+[AI] 02-19 16:21:13.494 D/ModelService( 3306): Loading LLM: smollm2-360m-instruct-q8_0
+[AI] 02-19 16:21:13.504 D/ModelService( 3306): Model smollm2-360m-instruct-q8_0 downloaded: true
+[AI] 02-19 16:21:13.511 I/System.out( 3306): [DEBUG] [CppBridgeLLM] [Native] State changed: NOT_CREATED -> CREATED
+[AI] 02-19 16:21:13.512 I/System.out( 3306): [INFO] [CppBridgeLLM] [Native] LLM component created
+[AI] 02-19 16:21:13.512 I/System.out( 3306): [DEBUG] [CppBridgeLLM] [Native] State changed: CREATED -> LOADING
+[AI] 02-19 16:21:13.512 I/System.out( 3306): [INFO] [CppBridgeLLM] [Native] Loading model: smollm2-360m-instruct-q8_0 from /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/llm/smollm2-360m-instruct-q8_0
+[AI] 02-19 16:21:13.513 I/RACCommonsJNI( 3306): racLlmComponentLoadModel called with handle=-5476376623302972448
+[AI] 02-19 16:21:13.513 I/RACCommonsJNI( 3306): racLlmComponentLoadModel path=/data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/llm/smollm2-360m-instruct-q8_0, id=smollm2-360m-instruct-q8_0, name=SmolLM2 360M
+[AI] 02-19 16:21:13.513 I/RACCommonsJNI( 3306): Before load_model - TEXT_GENERATION providers: count=1, list_result=0
+[AI] 02-19 16:21:14.625 I/RACCommonsJNI( 3306): rac_llm_component_load_model returned: 0
+[AI] 02-19 16:21:14.625 I/System.out( 3306): [DEBUG] [CppBridgeLLM] [Native] State changed: LOADING -> READY
+[AI] 02-19 16:21:14.625 I/System.out( 3306): [INFO] [CppBridgeLLM] [Native] Model loaded successfully: smollm2-360m-instruct-q8_0
+[AI] 02-19 16:21:14.625 I/System.out( 3306): [DEBUG] [CppBridgeState] [Native] Component LLM state changed: NOT_CREATED -> READY
+[AI] 02-19 16:21:14.626 D/ModelService( 3306): LLM loaded: smollm2-360m-instruct-q8_0
+[WARN] 02-19 16:21:22.709 W/WindowOnBackDispatcher( 3306): OnBackInvokedCallback is not enabled for the application.
+[WARN] 02-19 16:21:22.709 W/WindowOnBackDispatcher( 3306): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+[AI] 02-19 16:21:22.789 I/TextToSpeech( 3306): Sucessfully bound to com.google.android.tts
+[ERROR] 02-19 16:21:23.218 E/FileUtils( 3306): err write to mi_exception_log
+[ERROR] 02-19 16:21:23.218 E/FileUtils( 3306): err write to mi_exception_log
+[ERROR] 02-19 16:21:23.218 E/FileUtils( 3306): err write to mi_exception_log
+[ERROR] 02-19 16:21:23.246 E/FileUtils( 3306): err write to mi_exception_log
+[ERROR] 02-19 16:21:23.754 E/BinderMonitor( 3306): err open binder_delay errno=2
+[ERROR] 02-19 16:21:23.755 E/FileUtils( 3306): err write to mi_exception_log
+[ERROR] 02-19 16:21:24.487 E/FileUtils( 3306): err write to mi_exception_log
+[ERROR] 02-19 16:21:24.830 D/ActivityThread( 3306): Fail to check app heapsize due to java.lang.NoSuchMethodException: dalvik.system.VMRuntime.getBlockingGcCountForAlloc []
+[AI] 02-19 16:21:24.990 I/TextToSpeech( 3306): Connected to TTS engine
+[AI] 02-19 16:21:25.236 I/TextToSpeech( 3306): Setting up the connection to TTS engine...
+[AI] 02-19 16:21:25.531 D/AccentTTS( 3306): Android TTS ready. Accents: 81
+[ERROR] 02-19 16:21:25.532 E/FileUtils( 3306): err write to mi_exception_log
+[AI] 02-19 16:21:26.619 I/ForceDarkHelperStubImpl( 3306): setViewRootImplForceDark: false for com.runanywhere.kotlin_starter_example.MainActivity@6e23aa8, reason: AppDarkModeEnable
+[ERROR] 02-19 16:21:26.638 E/ActivityThread( 3306):  fail in deliverResultsIfNeeded java.lang.NullPointerException: Attempt to invoke virtual method 'java.lang.String android.os.Bundle.getString(java.lang.String)' on a null object reference
+[WARN] 02-19 16:21:26.641 W/WindowOnBackDispatcher( 3306): OnBackInvokedCallback is not enabled for the application.
+[WARN] 02-19 16:21:26.641 W/WindowOnBackDispatcher( 3306): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+[ERROR] 02-19 16:21:26.644 E/ActivityThread( 3306):  fail in deliverResultsIfNeeded java.lang.NullPointerException: Attempt to invoke virtual method 'java.lang.String android.os.Bundle.getString(java.lang.String)' on a null object reference
+[WARN] 02-19 16:21:26.702 W/libc    ( 3306): Access denied finding property "vendor.display.enable_optimal_refresh_rate"
+[WARN] 02-19 16:21:26.696 W/starter_example( 3306): type=1400 audit(0.0:2115262): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=16406 scontext=u:r:untrusted_app:s0:c12,c258,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=org.telegram.messenger
+[ERROR] 02-19 16:21:26.705 E/OpenGLRenderer( 3306): Unable to match the desired swap behavior.
+[ERROR] 02-19 16:21:26.771 E/FileUtils( 3306): err write to mi_exception_log
+[WARN] 02-19 16:21:26.822 W/System.err( 3306): SLF4J(W): No SLF4J providers were found.
+[WARN] 02-19 16:21:26.822 W/System.err( 3306): SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+[WARN] 02-19 16:21:26.822 W/System.err( 3306): SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+[AI] 02-19 16:21:31.341 D/SmartDocSearch( 3306): Saved cleaned document to file: /data/user/0/com.runanywhere.kotlin_starter_example/files/youlearn_docs/f5b1df23-cd3d-4718-89ef-f0f816c68849.txt (44307 raw -> 44307 clean chars)
+[ERROR] 02-19 16:21:31.729 E/FileUtils( 3306): err write to mi_exception_log
+[ERROR] 02-19 16:21:31.768 E/FileUtils( 3306): err write to mi_exception_log
+[AI] 02-19 16:21:32.275 I/ImeTracker( 3306): com.runanywhere.kotlin_starter_example:93d54f2e: onRequestShow at ORIGIN_CLIENT_SHOW_SOFT_INPUT reason SHOW_SOFT_INPUT_BY_INSETS_API
+[ERROR] 02-19 16:21:32.317 E/FileUtils( 3306): err write to mi_exception_log
+[AI] 02-19 16:21:32.331 I/ImeTracker( 3306): com.runanywhere.kotlin_starter_example:ff9cfd08: onRequestShow at ORIGIN_CLIENT_SHOW_SOFT_INPUT reason SHOW_SOFT_INPUT
+[AI] 02-19 16:21:32.581 I/ImeTracker( 3306): com.runanywhere.kotlin_starter_example:ff9cfd08: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
+[AI] 02-19 16:21:32.847 I/ImeTracker( 3306): com.runanywhere.kotlin_starter_example:93d54f2e: onShown
+[ERROR] 02-19 16:21:34.057 E/FileUtils( 3306): err write to mi_exception_log
+[ERROR] 02-19 16:21:35.093 E/FileUtils( 3306): err write to mi_exception_log
+[AI] 02-19 16:21:35.107 I/ImeTracker( 3306): com.runanywhere.kotlin_starter_example:c997f7d7: onRequestHide at ORIGIN_CLIENT_HIDE_SOFT_INPUT reason HIDE_SOFT_INPUT_BY_INSETS_API
+[AI] 02-19 16:21:35.108 I/ImeTracker( 3306): com.runanywhere.kotlin_starter_example:1569d50e: onRequestHide at ORIGIN_CLIENT_HIDE_SOFT_INPUT reason HIDE_SOFT_INPUT_BY_INSETS_API
+[WARN] 02-19 16:21:35.126 W/RemoteInputConnectionImpl( 3306): getTextBeforeCursor on inactive InputConnection
+[WARN] 02-19 16:21:35.177 W/System  ( 3306): A resource failed to call release. 
+[AI] 02-19 16:21:35.208 D/LLMBooster( 3306): Preparing for LLM inference. Free heap: 503MB
+[AI] 02-19 16:21:35.208 D/LLMBooster( 3306): Native heap: 948MB allocated / 951MB total
+[AI] 02-19 16:21:35.209 D/LLMBoost( 3306): Device RAM: 5461MB, Native heap: 948MB
+[AI] 02-19 16:21:35.209 D/LLMBoost( 3306): Unloading STT/TTS to free ~140MB native memory for LLM inference
+[AI] 02-19 16:21:35.209 D/ModelService( 3306): Unloading TTS to free memory for LLM generation
+[ERROR] 02-19 16:21:35.210 E/FileUtils( 3306): err write to mi_exception_log
+[AI] 02-19 16:21:35.210 I/System.out( 3306): [DEBUG] [CppBridgeTTS] [Native] State changed: READY -> UNLOADING
+[AI] 02-19 16:21:35.210 I/System.out( 3306): [INFO] [CppBridgeTTS] [Native] Unloading model: vits-piper-en_US-lessac-medium
+[AI] 02-19 16:21:35.221 I/ImeTracker( 3306): com.runanywhere.kotlin_starter_example:c997f7d7: onCancelled at PHASE_CLIENT_ANIMATION_CANCEL
+[AI] 02-19 16:21:35.228 I/ImeTracker( 3306): com.runanywhere.kotlin_starter_example:9c6a2c2a: onCancelled at PHASE_CLIENT_ANIMATION_CANCEL
+[AI] 02-19 16:21:35.234 I/System.out( 3306): [DEBUG] [CppBridgeTTS] [Native] State changed: UNLOADING -> CREATED
+[AI] 02-19 16:21:35.234 I/System.out( 3306): [DEBUG] [CppBridgeState] [Native] Component TTS state changed: READY -> CREATED
+[WARN] 02-19 16:21:35.250 W/WindowOnBackDispatcher( 3306): sendCancelIfRunning: isInProgress=falsecallback=ImeCallback=ImeOnBackInvokedCallback@154436867 Callback=android.window.IOnBackInvokedCallback$Stub$Proxy@1b215cc
+[AI] 02-19 16:21:35.251 D/ModelService( 3306): Unloading STT to free memory for LLM generation
+[AI] 02-19 16:21:35.252 I/System.out( 3306): [DEBUG] [CppBridgeSTT] [Native] State changed: READY -> UNLOADING
+[AI] 02-19 16:21:35.252 I/System.out( 3306): [INFO] [CppBridgeSTT] [Native] Unloading model: sherpa-onnx-whisper-tiny.en
+[AI] 02-19 16:21:35.288 I/System.out( 3306): [DEBUG] [CppBridgeSTT] [Native] State changed: UNLOADING -> CREATED
+[AI] 02-19 16:21:35.289 I/System.out( 3306): [DEBUG] [CppBridgeState] [Native] Component STT state changed: READY -> CREATED
+[AI] 02-19 16:21:35.566 D/LLMBooster( 3306): GC complete. Free mem: 503MB
+[ERROR] 02-19 16:21:35.567 E/FileUtils( 3306): err write to mi_exception_log
+[AI] 02-19 16:21:35.570 I/ImeTracker( 3306): com.runanywhere.kotlin_starter_example:b19998f2: onRequestHide at ORIGIN_CLIENT_HIDE_SOFT_INPUT reason HIDE_SOFT_INPUT_BY_INSETS_API
+[AI] 02-19 16:21:35.572 I/ImeTracker( 3306): com.runanywhere.kotlin_starter_example:1569d50e: onHidden
+[AI] 02-19 16:21:35.672 D/LLMBooster( 3306): Native heap: 542MB allocated / 849MB total
+[AI] 02-19 16:21:35.672 D/LLMBoost( 3306): After unload ΓÇö native heap: 542MB
+[AI] 02-19 16:21:35.672 D/LLMBooster( 3306): Native heap: 542MB allocated / 849MB total
+[AI] 02-19 16:21:35.674 D/ModelService( 3306): Safety check: native=542MB, device=5461MB, danger=4095MB, model=smollm2-360m-instruct-q8_0
+[AI] 02-19 16:21:35.674 D/LLMBoost( 3306): Resetting KV cache for clean context
+[AI] 02-19 16:21:35.674 D/ModelService( 3306): Resetting LLM context (FULL memory free) for smollm2-360m-instruct-q8_0
+[AI] 02-19 16:21:35.675 I/System.out( 3306): [DEBUG] [CppBridgeLLM] [Native] State changed: READY -> UNLOADING
+[AI] 02-19 16:21:35.675 I/System.out( 3306): [INFO] [CppBridgeLLM] [Native] Unloading model: smollm2-360m-instruct-q8_0
+[AI] 02-19 16:21:35.712 I/System.out( 3306): [DEBUG] [CppBridgeLLM] [Native] State changed: UNLOADING -> CREATED
+[AI] 02-19 16:21:35.712 I/System.out( 3306): [DEBUG] [CppBridgeState] [Native] Component LLM state changed: READY -> CREATED
+[AI] 02-19 16:21:35.780 D/LLMBooster( 3306): GC complete. Free mem: 503MB
+[ERROR] 02-19 16:21:35.781 E/FileUtils( 3306): err write to mi_exception_log
+[AI] 02-19 16:21:35.951 D/LLMBooster( 3306): GC complete. Free mem: 503MB
+[ERROR] 02-19 16:21:35.951 E/FileUtils( 3306): err write to mi_exception_log
+[AI] 02-19 16:21:36.152 D/ModelService( 3306): After unload+GC ΓÇö native heap: 30MB
+[AI] 02-19 16:21:36.155 I/System.out( 3306): [DEBUG] [CppBridgeLLM] [Native] State changed: CREATED -> LOADING
+[AI] 02-19 16:21:36.155 I/System.out( 3306): [INFO] [CppBridgeLLM] [Native] Loading model: smollm2-360m-instruct-q8_0 from /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/llm/smollm2-360m-instruct-q8_0
+[AI] 02-19 16:21:36.155 I/RACCommonsJNI( 3306): racLlmComponentLoadModel called with handle=-5476376623302972448
+[AI] 02-19 16:21:36.155 I/RACCommonsJNI( 3306): racLlmComponentLoadModel path=/data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/llm/smollm2-360m-instruct-q8_0, id=smollm2-360m-instruct-q8_0, name=SmolLM2 360M
+[AI] 02-19 16:21:36.155 I/RACCommonsJNI( 3306): Before load_model - TEXT_GENERATION providers: count=1, list_result=0
+[AI] 02-19 16:21:37.195 I/RACCommonsJNI( 3306): rac_llm_component_load_model returned: 0
+[AI] 02-19 16:21:37.195 I/System.out( 3306): [DEBUG] [CppBridgeLLM] [Native] State changed: LOADING -> READY
+[AI] 02-19 16:21:37.195 I/System.out( 3306): [INFO] [CppBridgeLLM] [Native] Model loaded successfully: smollm2-360m-instruct-q8_0
+[AI] 02-19 16:21:37.195 I/System.out( 3306): [DEBUG] [CppBridgeState] [Native] Component LLM state changed: CREATED -> READY
+[AI] 02-19 16:21:37.706 D/ModelService( 3306): LLM full reset done in 2032ms ΓÇö ALL memory freed and reloaded clean
+[ERROR] 02-19 16:21:37.780 E/FileUtils( 3306): err write to mi_exception_log
+[AI] 02-19 16:21:37.780 D/BridgeGen( 3306): ΓÜí Direct bridge generate: maxTok=512, temp=0.65, topK=20, topP=0.85, repeatPen=1.15
+[AI] 02-19 16:21:37.780 I/System.out( 3306): [DEBUG] [CppBridgeLLM] [Native] State changed: READY -> GENERATING
+[AI] 02-19 16:21:37.780 I/System.out( 3306): [DEBUG] [CppBridgeLLM] [Native] Starting streaming generation (prompt length: 2240)
+[AI] 02-19 16:21:37.781 I/RACCommonsJNI( 3306): racLlmComponentGenerateStreamWithCallback called with handle=-5476376623302972448
+[AI] 02-19 16:21:37.781 I/RACCommonsJNI( 3306): racLlmComponentGenerateStreamWithCallback prompt length=2272
+[AI] 02-19 16:21:37.781 I/RACCommonsJNI( 3306): racLlmComponentGenerateStreamWithCallback calling rac_llm_component_generate_stream...
+[AI] 02-19 16:21:37.783 I/System.out( 3306): [DEBUG] [CppBridgeTelemetry] [Native] Request body: [{"sdk_event_id":"febe70aa-b9d8-4295-b890-acba60a6309e","event_timestamp":"2026-02-19T10:51:37.781Z","event_type":"llm.generation.started","created_at":"2026-02-19T10:51:37.781Z","modality":"llm","dev...
+[ERROR] 02-19 16:21:37.932 E/FileUtils( 3306): err write to mi_exception_log
+[FATAL] 02-19 16:21:37.957 I/libc    ( 3306): handling signal: 6
+[FATAL] --------- beginning of crash
+[FATAL] 02-19 16:21:37.963 F/libc    ( 3306): Fatal signal 6 (SIGABRT), code -1 (SI_QUEUE) in tid 3665 (DefaultDispatch), pid 3306 (starter_example)
+[FATAL] 02-19 16:21:37.964 I/libc    ( 3306): debuggerd_dispatch_pseudothread start. crashing tid: 3665
+[FATAL] 02-19 16:21:37.986 I/libc    ( 3306): crash_dump pid: 4499
+[ERROR] 02-19 16:21:38.139 I/System.out( 3306): [DEBUG] [CppBridgeTelemetry] [Native] Response: [{"id":"9b5d7d19-a534-4320-a57f-c82496b51ef4","sdk_event_id":"febe70aa-b9d8-4295-b890-acba60a6309e","event_type":"llm.generation.started","event_timestamp":"2026-02-19T10:51:37.781+00:00","created_at":"2026-02-19T10:51:37.781+00:00","modality":"llm","device_id":"cd210fa2-fb04-4a31-b6e4-56fc0169e623","session_id":"gen_1064354037813561","model_id":"smollm2-360m-instruct-q8_0","model_name":"SmolLM2 360M","framework":"unknown","device":"22111317I","os_version":"14","platform":"android","sdk_version":"0.1.0","processing_time_ms":null,"success":null,"error_message":null,"error_code":null,"input_tokens":null,"output_tokens":null,"total_tokens":null,"tokens_per_second":null,"time_to_first_token_ms":null,"prompt_eval_time_ms":null,"generation_time_ms":null,"context_length":8192,"temperature":0.7,"max_tokens":512,"audio_duration_ms":null,"real_time_factor":null,"word_count":null,"confidence":null,"language":null,"is_streaming":true,"segment_index":null,"character_count":null,"characters_per_second":null,"audio_size_bytes":null,"sample_rate":null,"voice":null,"output_duration_ms":null,"migrated_from_v1":false,"v1_source_id":null,"synced_from_prod":false,"api_key_id":null,"org_id":null,"received_at":null}]

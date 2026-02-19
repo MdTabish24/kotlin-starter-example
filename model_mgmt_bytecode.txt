@@ -1,973 +1,1616 @@
-﻿Compiled from "RunAnywhere+ModelManagement.jvmAndroid.kt"
-public final class com.runanywhere.sdk.public.extensions.RunAnywhere_ModelManagement_jvmAndroidKt {
-  public static final void registerModelInternal(com.runanywhere.sdk.public.extensions.Models.ModelInfo);
-    Code:
-       0: nop
-       1: new           #11                 // class com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo
-       4: dup
-       5: aload_0
-       6: invokevirtual #17                 // Method com/runanywhere/sdk/public/extensions/Models/ModelInfo.getId:()Ljava/lang/String;
-       9: aload_0
-      10: invokevirtual #20                 // Method com/runanywhere/sdk/public/extensions/Models/ModelInfo.getName:()Ljava/lang/String;
-      13: aload_0
-      14: invokevirtual #24                 // Method com/runanywhere/sdk/public/extensions/Models/ModelInfo.getCategory:()Lcom/runanywhere/sdk/public/extensions/Models/ModelCategory;
-      17: getstatic     #30                 // Field com/runanywhere/sdk/public/extensions/RunAnywhere_ModelManagement_jvmAndroidKt$WhenMappings.$EnumSwitchMapping$0:[I
-      20: swap
-      21: invokevirtual #36                 // Method com/runanywhere/sdk/public/extensions/Models/ModelCategory.ordinal:()I
-      24: iaload
-      25: tableswitch   { // 1 to 4
+﻿Compiled from "CppBridgeLLM.kt"
+public final class com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM {
+  public static final com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM INSTANCE;
 
-                     1: 56
+  private static volatile boolean isRegistered;
 
-                     2: 60
+  private static volatile int state;
 
-                     3: 64
+  private static volatile long handle;
 
-                     4: 68
-               default: 72
-          }
-      56: iconst_0
-      57: goto          73
-      60: iconst_1
-      61: goto          73
-      64: iconst_2
-      65: goto          73
-      68: iconst_3
-      69: goto          73
-      72: iconst_0
-      73: aload_0
-      74: invokevirtual #40                 // Method com/runanywhere/sdk/public/extensions/Models/ModelInfo.getFormat:()Lcom/runanywhere/sdk/public/extensions/Models/ModelFormat;
-      77: getstatic     #43                 // Field com/runanywhere/sdk/public/extensions/RunAnywhere_ModelManagement_jvmAndroidKt$WhenMappings.$EnumSwitchMapping$1:[I
-      80: swap
-      81: invokevirtual #46                 // Method com/runanywhere/sdk/public/extensions/Models/ModelFormat.ordinal:()I
-      84: iaload
-      85: tableswitch   { // 1 to 3
+  private static volatile java.lang.String loadedModelId;
 
-                     1: 112
+  private static volatile java.lang.String loadedModelPath;
 
-                     2: 116
+  private static volatile boolean isCancelled;
 
-                     3: 120
-               default: 124
-          }
-     112: iconst_1
-     113: goto          125
-     116: iconst_2
-     117: goto          125
-     120: iconst_3
-     121: goto          125
-     124: iconst_0
-     125: aload_0
-     126: invokevirtual #50                 // Method com/runanywhere/sdk/public/extensions/Models/ModelInfo.getFramework:()Lcom/runanywhere/sdk/core/types/InferenceFramework;
-     129: getstatic     #53                 // Field com/runanywhere/sdk/public/extensions/RunAnywhere_ModelManagement_jvmAndroidKt$WhenMappings.$EnumSwitchMapping$2:[I
-     132: swap
-     133: invokevirtual #56                 // Method com/runanywhere/sdk/core/types/InferenceFramework.ordinal:()I
-     136: iaload
-     137: tableswitch   { // 1 to 8
+  private static volatile boolean isNativeLibraryLoaded;
 
-                     1: 184
+  private static final java.lang.Object lock;
 
-                     2: 188
+  private static final java.lang.String TAG;
 
-                     3: 192
+  private static final com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM shared;
 
-                     4: 196
+  private static volatile com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM$LLMListener llmListener;
 
-                     5: 200
+  private static volatile com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM$StreamCallback streamCallback;
 
-                     6: 204
-
-                     7: 208
-
-                     8: 213
-               default: 218
-          }
-     184: iconst_1
-     185: goto          226
-     188: iconst_0
-     189: goto          226
-     192: iconst_2
-     193: goto          226
-     196: iconst_3
-     197: goto          226
-     200: iconst_4
-     201: goto          226
-     204: iconst_5
-     205: goto          226
-     208: bipush        6
-     210: goto          226
-     213: bipush        99
-     215: goto          226
-     218: new           #58                 // class kotlin/NoWhenBranchMatchedException
-     221: dup
-     222: invokespecial #62                 // Method kotlin/NoWhenBranchMatchedException."<init>":()V
-     225: athrow
-     226: aload_0
-     227: invokevirtual #65                 // Method com/runanywhere/sdk/public/extensions/Models/ModelInfo.getDownloadURL:()Ljava/lang/String;
-     230: aload_0
-     231: invokevirtual #68                 // Method com/runanywhere/sdk/public/extensions/Models/ModelInfo.getLocalPath:()Ljava/lang/String;
-     234: aload_0
-     235: invokevirtual #72                 // Method com/runanywhere/sdk/public/extensions/Models/ModelInfo.getDownloadSize:()Ljava/lang/Long;
-     238: dup
-     239: ifnull        248
-     242: invokevirtual #78                 // Method java/lang/Long.longValue:()J
-     245: goto          250
-     248: pop
-     249: lconst_0
-     250: aload_0
-     251: invokevirtual #82                 // Method com/runanywhere/sdk/public/extensions/Models/ModelInfo.getContextLength:()Ljava/lang/Integer;
-     254: dup
-     255: ifnull        264
-     258: invokevirtual #87                 // Method java/lang/Integer.intValue:()I
-     261: goto          266
-     264: pop
-     265: iconst_0
-     266: aload_0
-     267: invokevirtual #91                 // Method com/runanywhere/sdk/public/extensions/Models/ModelInfo.getSupportsThinking:()Z
-     270: aload_0
-     271: invokevirtual #94                 // Method com/runanywhere/sdk/public/extensions/Models/ModelInfo.getDescription:()Ljava/lang/String;
-     274: iconst_1
-     275: invokespecial #97                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo."<init>":(Ljava/lang/String;Ljava/lang/String;IIILjava/lang/String;Ljava/lang/String;JIZLjava/lang/String;I)V
-     278: astore_1
-     279: getstatic     #103                // Field com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry.INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry;
-     282: aload_1
-     283: invokevirtual #107                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry.save:(Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo;)V
-     286: aload_0
-     287: invokestatic  #110                // Method addToModelCache:(Lcom/runanywhere/sdk/public/extensions/Models/ModelInfo;)V
-     290: getstatic     #114                // Field modelsLogger:Lcom/runanywhere/sdk/foundation/SDKLogger;
-     293: aload_0
-     294: invokevirtual #20                 // Method com/runanywhere/sdk/public/extensions/Models/ModelInfo.getName:()Ljava/lang/String;
-     297: aload_0
-     298: invokevirtual #17                 // Method com/runanywhere/sdk/public/extensions/Models/ModelInfo.getId:()Ljava/lang/String;
-     301: invokedynamic #126,  0            // InvokeDynamic #0:makeConcatWithConstants:(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
-     306: aconst_null
-     307: iconst_2
-     308: aconst_null
-     309: invokestatic  #132                // Method com/runanywhere/sdk/foundation/SDKLogger.info$default:(Lcom/runanywhere/sdk/foundation/SDKLogger;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)V
-     312: goto          336
-     315: astore_1
-     316: getstatic     #114                // Field modelsLogger:Lcom/runanywhere/sdk/foundation/SDKLogger;
-     319: aload_1
-     320: invokevirtual #135                // Method java/lang/Exception.getMessage:()Ljava/lang/String;
-     323: invokedynamic #140,  0            // InvokeDynamic #1:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
-     328: aconst_null
-     329: aconst_null
-     330: bipush        6
-     332: aconst_null
-     333: invokestatic  #144                // Method com/runanywhere/sdk/foundation/SDKLogger.error$default:(Lcom/runanywhere/sdk/foundation/SDKLogger;Ljava/lang/String;Ljava/util/Map;Ljava/lang/Throwable;ILjava/lang/Object;)V
-     336: return
-    Exception table:
-       from    to  target type
-           0   312   315   Class java/lang/Exception
-
-  public static final java.lang.Object availableModels(com.runanywhere.sdk.public.RunAnywhere, kotlin.coroutines.Continuation<? super java.util.List<com.runanywhere.sdk.public.extensions.Models.ModelInfo>>);
+  private com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM();
     Code:
        0: aload_0
-       1: invokevirtual #226                // Method com/runanywhere/sdk/public/RunAnywhere.isInitialized:()Z
-       4: ifne          19
-       7: getstatic     #232                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
-      10: ldc           #234                // String SDK not initialized
-      12: aconst_null
-      13: iconst_2
-      14: aconst_null
-      15: invokestatic  #240                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.notInitialized$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
-      18: athrow
-      19: getstatic     #243                // Field scanLock:Ljava/lang/Object;
-      22: astore_3
-      23: aload_3
-      24: monitorenter
-      25: nop
-      26: iconst_0
-      27: istore        4
-      29: getstatic     #247                // Field hasScannedForDownloads:Z
-      32: ifne          48
-      35: getstatic     #103                // Field com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry.INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry;
-      38: invokevirtual #250                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry.scanAndRestoreDownloadedModels:()V
-      41: invokestatic  #253                // Method syncRegisteredModelsWithBridge:()V
-      44: iconst_1
-      45: putstatic     #247                // Field hasScannedForDownloads:Z
-      48: nop
-      49: getstatic     #258                // Field kotlin/Unit.INSTANCE:Lkotlin/Unit;
-      52: astore        4
-      54: aload_3
-      55: monitorexit
-      56: goto          66
-      59: astore        5
-      61: aload_3
-      62: monitorexit
-      63: aload         5
-      65: athrow
-      66: invokestatic  #260                // Method getRegisteredModels:()Ljava/util/List;
-      69: astore_2
-      70: invokestatic  #262                // Method getAllBridgeModels:()Ljava/util/List;
-      73: checkcast     #201                // class java/lang/Iterable
-      76: astore        4
-      78: iconst_0
-      79: istore        5
-      81: aload         4
-      83: astore        6
-      85: new           #264                // class java/util/ArrayList
-      88: dup
-      89: aload         4
-      91: bipush        10
-      93: invokestatic  #268                // Method kotlin/collections/CollectionsKt.collectionSizeOrDefault:(Ljava/lang/Iterable;I)I
-      96: invokespecial #271                // Method java/util/ArrayList."<init>":(I)V
-      99: checkcast     #273                // class java/util/Collection
-     102: astore        7
-     104: iconst_0
-     105: istore        8
-     107: aload         6
-     109: invokeinterface #277,  1          // InterfaceMethod java/lang/Iterable.iterator:()Ljava/util/Iterator;
-     114: astore        9
-     116: aload         9
-     118: invokeinterface #282,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
-     123: ifeq          166
-     126: aload         9
-     128: invokeinterface #286,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
-     133: astore        10
-     135: aload         7
-     137: aload         10
-     139: checkcast     #11                 // class com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo
-     142: astore        11
-     144: astore        13
-     146: iconst_0
-     147: istore        12
-     149: aload         11
-     151: invokestatic  #288                // Method toPublicModelInfo:(Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo;)Lcom/runanywhere/sdk/public/extensions/Models/ModelInfo;
-     154: aload         13
-     156: swap
-     157: invokeinterface #289,  2          // InterfaceMethod java/util/Collection.add:(Ljava/lang/Object;)Z
-     162: pop
-     163: goto          116
-     166: aload         7
-     168: checkcast     #188                // class java/util/List
-     171: nop
-     172: astore_3
-     173: new           #291                // class java/util/LinkedHashMap
-     176: dup
-     177: invokespecial #292                // Method java/util/LinkedHashMap."<init>":()V
-     180: checkcast     #294                // class java/util/Map
-     183: astore        4
-     185: aload_3
-     186: invokeinterface #295,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
-     191: astore        5
-     193: aload         5
-     195: invokeinterface #282,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
-     200: ifeq          233
-     203: aload         5
-     205: invokeinterface #286,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
-     210: checkcast     #13                 // class com/runanywhere/sdk/public/extensions/Models/ModelInfo
-     213: astore        6
-     215: aload         4
-     217: aload         6
-     219: invokevirtual #17                 // Method com/runanywhere/sdk/public/extensions/Models/ModelInfo.getId:()Ljava/lang/String;
-     222: aload         6
-     224: invokeinterface #299,  3          // InterfaceMethod java/util/Map.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-     229: pop
-     230: goto          193
-     233: aload_2
-     234: invokeinterface #295,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
-     239: astore        5
-     241: aload         5
-     243: invokeinterface #282,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
-     248: ifeq          281
-     251: aload         5
-     253: invokeinterface #286,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
-     258: checkcast     #13                 // class com/runanywhere/sdk/public/extensions/Models/ModelInfo
-     261: astore        6
-     263: aload         4
-     265: aload         6
-     267: invokevirtual #17                 // Method com/runanywhere/sdk/public/extensions/Models/ModelInfo.getId:()Ljava/lang/String;
-     270: aload         6
-     272: invokeinterface #299,  3          // InterfaceMethod java/util/Map.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-     277: pop
-     278: goto          241
-     281: aload         4
-     283: invokeinterface #303,  1          // InterfaceMethod java/util/Map.values:()Ljava/util/Collection;
-     288: checkcast     #201                // class java/lang/Iterable
-     291: invokestatic  #205                // Method kotlin/collections/CollectionsKt.toList:(Ljava/lang/Iterable;)Ljava/util/List;
-     294: areturn
-    Exception table:
-       from    to  target type
-          25    54    59   any
-          59    61    59   any
-
-  public static final java.lang.Object models(com.runanywhere.sdk.public.RunAnywhere, com.runanywhere.sdk.public.extensions.Models.ModelCategory, kotlin.coroutines.Continuation<? super java.util.List<com.runanywhere.sdk.public.extensions.Models.ModelInfo>>);
-    Code:
-       0: aload_0
-       1: invokevirtual #226                // Method com/runanywhere/sdk/public/RunAnywhere.isInitialized:()Z
-       4: ifne          19
-       7: getstatic     #232                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
-      10: ldc           #234                // String SDK not initialized
-      12: aconst_null
-      13: iconst_2
-      14: aconst_null
-      15: invokestatic  #240                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.notInitialized$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
-      18: athrow
-      19: aload_1
-      20: getstatic     #30                 // Field com/runanywhere/sdk/public/extensions/RunAnywhere_ModelManagement_jvmAndroidKt$WhenMappings.$EnumSwitchMapping$0:[I
-      23: swap
-      24: invokevirtual #36                 // Method com/runanywhere/sdk/public/extensions/Models/ModelCategory.ordinal:()I
-      27: iaload
-      28: tableswitch   { // 1 to 4
-
-                     1: 60
-
-                     2: 64
-
-                     3: 68
-
-                     4: 72
-               default: 76
-          }
-      60: iconst_0
-      61: goto          80
-      64: iconst_1
-      65: goto          80
-      68: iconst_2
-      69: goto          80
-      72: iconst_3
-      73: goto          80
-      76: invokestatic  #352                // Method kotlin/collections/CollectionsKt.emptyList:()Ljava/util/List;
-      79: areturn
-      80: istore_3
-      81: getstatic     #103                // Field com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry.INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry;
-      84: iload_3
-      85: invokevirtual #356                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry.getModelsByType:(I)Ljava/util/List;
-      88: checkcast     #201                // class java/lang/Iterable
-      91: astore        4
-      93: iconst_0
-      94: istore        5
-      96: aload         4
-      98: astore        6
-     100: new           #264                // class java/util/ArrayList
-     103: dup
-     104: aload         4
-     106: bipush        10
-     108: invokestatic  #268                // Method kotlin/collections/CollectionsKt.collectionSizeOrDefault:(Ljava/lang/Iterable;I)I
-     111: invokespecial #271                // Method java/util/ArrayList."<init>":(I)V
-     114: checkcast     #273                // class java/util/Collection
-     117: astore        7
-     119: iconst_0
-     120: istore        8
-     122: aload         6
-     124: invokeinterface #277,  1          // InterfaceMethod java/lang/Iterable.iterator:()Ljava/util/Iterator;
-     129: astore        9
-     131: aload         9
-     133: invokeinterface #282,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
-     138: ifeq          181
-     141: aload         9
-     143: invokeinterface #286,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
-     148: astore        10
-     150: aload         7
-     152: aload         10
-     154: checkcast     #11                 // class com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo
-     157: astore        11
-     159: astore        13
-     161: iconst_0
-     162: istore        12
-     164: aload         11
-     166: invokestatic  #211                // Method bridgeModelToPublic:(Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo;)Lcom/runanywhere/sdk/public/extensions/Models/ModelInfo;
-     169: aload         13
-     171: swap
-     172: invokeinterface #289,  2          // InterfaceMethod java/util/Collection.add:(Ljava/lang/Object;)Z
-     177: pop
-     178: goto          131
-     181: aload         7
-     183: checkcast     #188                // class java/util/List
-     186: nop
-     187: areturn
-
-  public static final java.lang.Object downloadedModels(com.runanywhere.sdk.public.RunAnywhere, kotlin.coroutines.Continuation<? super java.util.List<com.runanywhere.sdk.public.extensions.Models.ModelInfo>>);
-    Code:
-       0: aload_0
-       1: invokevirtual #226                // Method com/runanywhere/sdk/public/RunAnywhere.isInitialized:()Z
-       4: ifne          19
-       7: getstatic     #232                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
-      10: ldc           #234                // String SDK not initialized
-      12: aconst_null
-      13: iconst_2
-      14: aconst_null
-      15: invokestatic  #240                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.notInitialized$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
-      18: athrow
-      19: getstatic     #103                // Field com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry.INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry;
-      22: invokevirtual #365                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry.getDownloaded:()Ljava/util/List;
-      25: checkcast     #201                // class java/lang/Iterable
-      28: astore_2
-      29: iconst_0
-      30: istore_3
-      31: aload_2
-      32: astore        4
-      34: new           #264                // class java/util/ArrayList
-      37: dup
-      38: aload_2
-      39: bipush        10
-      41: invokestatic  #268                // Method kotlin/collections/CollectionsKt.collectionSizeOrDefault:(Ljava/lang/Iterable;I)I
-      44: invokespecial #271                // Method java/util/ArrayList."<init>":(I)V
-      47: checkcast     #273                // class java/util/Collection
-      50: astore        5
-      52: iconst_0
-      53: istore        6
-      55: aload         4
-      57: invokeinterface #277,  1          // InterfaceMethod java/lang/Iterable.iterator:()Ljava/util/Iterator;
-      62: astore        7
-      64: aload         7
-      66: invokeinterface #282,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
-      71: ifeq          114
-      74: aload         7
-      76: invokeinterface #286,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
-      81: astore        8
-      83: aload         5
-      85: aload         8
-      87: checkcast     #11                 // class com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo
-      90: astore        9
-      92: astore        11
-      94: iconst_0
-      95: istore        10
-      97: aload         9
-      99: invokestatic  #211                // Method bridgeModelToPublic:(Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo;)Lcom/runanywhere/sdk/public/extensions/Models/ModelInfo;
-     102: aload         11
-     104: swap
-     105: invokeinterface #289,  2          // InterfaceMethod java/util/Collection.add:(Ljava/lang/Object;)Z
-     110: pop
-     111: goto          64
-     114: aload         5
-     116: checkcast     #188                // class java/util/List
-     119: nop
-     120: areturn
-
-  public static final java.lang.Object model(com.runanywhere.sdk.public.RunAnywhere, java.lang.String, kotlin.coroutines.Continuation<? super com.runanywhere.sdk.public.extensions.Models.ModelInfo>);
-    Code:
-       0: aload_0
-       1: invokevirtual #226                // Method com/runanywhere/sdk/public/RunAnywhere.isInitialized:()Z
-       4: ifne          19
-       7: getstatic     #232                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
-      10: ldc           #234                // String SDK not initialized
-      12: aconst_null
-      13: iconst_2
-      14: aconst_null
-      15: invokestatic  #240                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.notInitialized$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
-      18: athrow
-      19: getstatic     #103                // Field com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry.INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry;
-      22: aload_1
-      23: invokevirtual #330                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry.get:(Ljava/lang/String;)Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo;
-      26: dup
-      27: ifnonnull     33
-      30: pop
-      31: aconst_null
-      32: areturn
-      33: astore_3
-      34: aload_3
-      35: invokestatic  #211                // Method bridgeModelToPublic:(Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo;)Lcom/runanywhere/sdk/public/extensions/Models/ModelInfo;
-      38: areturn
-
-  public static final kotlinx.coroutines.flow.Flow<com.runanywhere.sdk.public.extensions.Models.DownloadProgress> downloadModel(com.runanywhere.sdk.public.RunAnywhere, java.lang.String);
-    Code:
-       0: new           #447                // class com/runanywhere/sdk/public/extensions/RunAnywhere_ModelManagement_jvmAndroidKt$downloadModel$1
-       3: dup
-       4: aload_1
-       5: aconst_null
-       6: invokespecial #450                // Method com/runanywhere/sdk/public/extensions/RunAnywhere_ModelManagement_jvmAndroidKt$downloadModel$1."<init>":(Ljava/lang/String;Lkotlin/coroutines/Continuation;)V
-       9: checkcast     #452                // class kotlin/jvm/functions/Function2
-      12: invokestatic  #458                // Method kotlinx/coroutines/flow/FlowKt.callbackFlow:(Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/Flow;
-      15: areturn
-
-  public static final java.lang.Object cancelDownload(com.runanywhere.sdk.public.RunAnywhere, java.lang.String, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-    Code:
-       0: aload_0
-       1: invokevirtual #226                // Method com/runanywhere/sdk/public/RunAnywhere.isInitialized:()Z
-       4: ifne          19
-       7: getstatic     #232                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
-      10: ldc           #234                // String SDK not initialized
-      12: aconst_null
-      13: iconst_2
-      14: aconst_null
-      15: invokestatic  #240                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.notInitialized$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
-      18: athrow
-      19: getstatic     #103                // Field com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry.INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry;
-      22: aload_1
-      23: aconst_null
-      24: invokevirtual #717                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry.updateDownloadStatus:(Ljava/lang/String;Ljava/lang/String;)Z
-      27: pop
-      28: getstatic     #258                // Field kotlin/Unit.INSTANCE:Lkotlin/Unit;
-      31: areturn
-
-  public static final java.lang.Object isModelDownloaded(com.runanywhere.sdk.public.RunAnywhere, java.lang.String, kotlin.coroutines.Continuation<? super java.lang.Boolean>);
-    Code:
-       0: aload_0
-       1: invokevirtual #226                // Method com/runanywhere/sdk/public/RunAnywhere.isInitialized:()Z
-       4: ifne          19
-       7: getstatic     #232                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
-      10: ldc           #234                // String SDK not initialized
-      12: aconst_null
-      13: iconst_2
-      14: aconst_null
-      15: invokestatic  #240                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.notInitialized$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
-      18: athrow
-      19: getstatic     #103                // Field com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry.INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry;
-      22: aload_1
-      23: invokevirtual #330                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry.get:(Ljava/lang/String;)Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo;
-      26: dup
-      27: ifnonnull     36
-      30: pop
-      31: iconst_0
-      32: invokestatic  #726                // Method kotlin/coroutines/jvm/internal/Boxing.boxBoolean:(Z)Ljava/lang/Boolean;
-      35: areturn
-      36: astore_3
-      37: aload_3
-      38: invokevirtual #331                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo.getLocalPath:()Ljava/lang/String;
-      41: ifnull        71
-      44: aload_3
-      45: invokevirtual #331                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo.getLocalPath:()Ljava/lang/String;
-      48: checkcast     #728                // class java/lang/CharSequence
-      51: invokeinterface #731,  1          // InterfaceMethod java/lang/CharSequence.length:()I
-      56: ifle          63
-      59: iconst_1
-      60: goto          64
-      63: iconst_0
-      64: ifeq          71
-      67: iconst_1
-      68: goto          72
-      71: iconst_0
-      72: invokestatic  #726                // Method kotlin/coroutines/jvm/internal/Boxing.boxBoolean:(Z)Ljava/lang/Boolean;
-      75: areturn
-
-  public static final java.lang.Object deleteModel(com.runanywhere.sdk.public.RunAnywhere, java.lang.String, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-    Code:
-       0: aload_0
-       1: invokevirtual #226                // Method com/runanywhere/sdk/public/RunAnywhere.isInitialized:()Z
-       4: ifne          19
-       7: getstatic     #232                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
-      10: ldc           #234                // String SDK not initialized
-      12: aconst_null
-      13: iconst_2
-      14: aconst_null
-      15: invokestatic  #240                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.notInitialized$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
-      18: athrow
-      19: getstatic     #103                // Field com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry.INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry;
-      22: aload_1
-      23: invokevirtual #736                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry.remove:(Ljava/lang/String;)Z
-      26: pop
-      27: getstatic     #258                // Field kotlin/Unit.INSTANCE:Lkotlin/Unit;
-      30: areturn
-
-  public static final java.lang.Object deleteAllModels(com.runanywhere.sdk.public.RunAnywhere, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-    Code:
-       0: aload_0
-       1: invokevirtual #226                // Method com/runanywhere/sdk/public/RunAnywhere.isInitialized:()Z
-       4: ifne          19
-       7: getstatic     #232                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
-      10: ldc           #234                // String SDK not initialized
-      12: aconst_null
-      13: iconst_2
-      14: aconst_null
-      15: invokestatic  #240                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.notInitialized$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
-      18: athrow
-      19: getstatic     #258                // Field kotlin/Unit.INSTANCE:Lkotlin/Unit;
-      22: areturn
-
-  public static final java.lang.Object refreshModelRegistry(com.runanywhere.sdk.public.RunAnywhere, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-    Code:
-       0: aload_0
-       1: invokevirtual #226                // Method com/runanywhere/sdk/public/RunAnywhere.isInitialized:()Z
-       4: ifne          19
-       7: getstatic     #232                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
-      10: ldc           #234                // String SDK not initialized
-      12: aconst_null
-      13: iconst_2
-      14: aconst_null
-      15: invokestatic  #240                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.notInitialized$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
-      18: athrow
-      19: getstatic     #258                // Field kotlin/Unit.INSTANCE:Lkotlin/Unit;
-      22: areturn
-
-  public static final java.lang.Object loadLLMModel(com.runanywhere.sdk.public.RunAnywhere, java.lang.String, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-    Code:
-       0: aload_0
-       1: invokevirtual #226                // Method com/runanywhere/sdk/public/RunAnywhere.isInitialized:()Z
-       4: ifne          19
-       7: getstatic     #232                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
-      10: ldc           #234                // String SDK not initialized
-      12: aconst_null
-      13: iconst_2
-      14: aconst_null
-      15: invokestatic  #240                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.notInitialized$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
-      18: athrow
-      19: getstatic     #103                // Field com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry.INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry;
-      22: aload_1
-      23: invokevirtual #330                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry.get:(Ljava/lang/String;)Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo;
-      26: dup
-      27: ifnonnull     49
-      30: pop
-      31: getstatic     #232                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
-      34: aload_1
-      35: invokedynamic #746,  0            // InvokeDynamic #11:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
-      40: aconst_null
-      41: aconst_null
-      42: bipush        6
-      44: aconst_null
-      45: invokestatic  #750                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.model$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Lcom/runanywhere/sdk/foundation/errors/ErrorCode;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
-      48: athrow
-      49: astore_3
-      50: aload_3
-      51: invokevirtual #331                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo.getLocalPath:()Ljava/lang/String;
-      54: dup
-      55: ifnonnull     77
-      58: pop
-      59: getstatic     #232                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
-      62: aload_1
-      63: invokedynamic #753,  0            // InvokeDynamic #12:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
-      68: aconst_null
-      69: aconst_null
-      70: bipush        6
-      72: aconst_null
-      73: invokestatic  #750                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.model$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Lcom/runanywhere/sdk/foundation/errors/ErrorCode;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
-      76: athrow
-      77: astore        4
-      79: getstatic     #758                // Field com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM.INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
-      82: aload         4
-      84: aload_1
-      85: aload_3
-      86: invokevirtual #376                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo.getName:()Ljava/lang/String;
-      89: aconst_null
-      90: bipush        8
-      92: aconst_null
-      93: invokestatic  #762                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM.loadModel$default:(Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$ModelConfig;ILjava/lang/Object;)I
-      96: istore        5
-      98: iload         5
-     100: ifeq          123
-     103: getstatic     #232                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
-     106: aload_1
-     107: iload         5
-     109: invokedynamic #767,  0            // InvokeDynamic #13:makeConcatWithConstants:(Ljava/lang/String;I)Ljava/lang/String;
-     114: aconst_null
-     115: aconst_null
-     116: bipush        6
-     118: aconst_null
-     119: invokestatic  #770                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.llm$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Lcom/runanywhere/sdk/foundation/errors/ErrorCode;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
-     122: athrow
-     123: getstatic     #258                // Field kotlin/Unit.INSTANCE:Lkotlin/Unit;
-     126: areturn
-
-  public static final java.lang.Object unloadLLMModel(com.runanywhere.sdk.public.RunAnywhere, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-    Code:
-       0: aload_0
-       1: invokevirtual #226                // Method com/runanywhere/sdk/public/RunAnywhere.isInitialized:()Z
-       4: ifne          19
-       7: getstatic     #232                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
-      10: ldc           #234                // String SDK not initialized
-      12: aconst_null
-      13: iconst_2
-      14: aconst_null
-      15: invokestatic  #240                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.notInitialized$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
-      18: athrow
-      19: getstatic     #758                // Field com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM.INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
-      22: invokevirtual #776                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM.unload:()V
-      25: getstatic     #258                // Field kotlin/Unit.INSTANCE:Lkotlin/Unit;
-      28: areturn
-
-  public static final java.lang.Object isLLMModelLoaded(com.runanywhere.sdk.public.RunAnywhere, kotlin.coroutines.Continuation<? super java.lang.Boolean>);
-    Code:
-       0: getstatic     #758                // Field com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM.INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
-       3: invokevirtual #782                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM.isLoaded:()Z
-       6: invokestatic  #726                // Method kotlin/coroutines/jvm/internal/Boxing.boxBoolean:(Z)Ljava/lang/Boolean;
-       9: areturn
-
-  public static final java.lang.String getCurrentLLMModelId(com.runanywhere.sdk.public.RunAnywhere);
-    Code:
-       0: getstatic     #758                // Field com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM.INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
-       3: invokevirtual #788                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM.getLoadedModelId:()Ljava/lang/String;
-       6: areturn
-
-  public static final java.lang.Object currentLLMModel(com.runanywhere.sdk.public.RunAnywhere, kotlin.coroutines.Continuation<? super com.runanywhere.sdk.public.extensions.Models.ModelInfo>);
-    Code:
-       0: getstatic     #758                // Field com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM.INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
-       3: invokevirtual #788                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM.getLoadedModelId:()Ljava/lang/String;
-       6: dup
-       7: ifnonnull     13
-      10: pop
-      11: aconst_null
-      12: areturn
-      13: astore_2
-      14: invokestatic  #260                // Method getRegisteredModels:()Ljava/util/List;
-      17: checkcast     #201                // class java/lang/Iterable
-      20: astore        4
-      22: aload         4
-      24: invokeinterface #277,  1          // InterfaceMethod java/lang/Iterable.iterator:()Ljava/util/Iterator;
-      29: astore        5
-      31: aload         5
-      33: invokeinterface #282,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
-      38: ifeq          77
-      41: aload         5
-      43: invokeinterface #286,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
-      48: astore        6
-      50: aload         6
-      52: checkcast     #13                 // class com/runanywhere/sdk/public/extensions/Models/ModelInfo
-      55: astore        7
-      57: iconst_0
-      58: istore        8
-      60: aload         7
-      62: invokevirtual #17                 // Method com/runanywhere/sdk/public/extensions/Models/ModelInfo.getId:()Ljava/lang/String;
-      65: aload_2
-      66: invokestatic  #795                // Method kotlin/jvm/internal/Intrinsics.areEqual:(Ljava/lang/Object;Ljava/lang/Object;)Z
-      69: ifeq          31
-      72: aload         6
-      74: goto          78
-      77: aconst_null
-      78: checkcast     #13                 // class com/runanywhere/sdk/public/extensions/Models/ModelInfo
-      81: astore_3
-      82: aload_3
-      83: dup
-      84: ifnull        88
-      87: areturn
-      88: pop
-      89: invokestatic  #262                // Method getAllBridgeModels:()Ljava/util/List;
-      92: checkcast     #201                // class java/lang/Iterable
-      95: astore        5
-      97: aload         5
-      99: invokeinterface #277,  1          // InterfaceMethod java/lang/Iterable.iterator:()Ljava/util/Iterator;
-     104: astore        6
-     106: aload         6
-     108: invokeinterface #282,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
-     113: ifeq          152
-     116: aload         6
-     118: invokeinterface #286,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
-     123: astore        7
-     125: aload         7
-     127: checkcast     #11                 // class com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo
-     130: astore        8
-     132: iconst_0
-     133: istore        9
-     135: aload         8
-     137: invokevirtual #375                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo.getModelId:()Ljava/lang/String;
-     140: aload_2
-     141: invokestatic  #795                // Method kotlin/jvm/internal/Intrinsics.areEqual:(Ljava/lang/Object;Ljava/lang/Object;)Z
-     144: ifeq          106
-     147: aload         7
-     149: goto          153
-     152: aconst_null
-     153: checkcast     #11                 // class com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo
-     156: dup
-     157: ifnull        166
-     160: invokestatic  #288                // Method toPublicModelInfo:(Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo;)Lcom/runanywhere/sdk/public/extensions/Models/ModelInfo;
-     163: goto          168
-     166: pop
-     167: aconst_null
-     168: areturn
-
-  public static final java.lang.Object currentSTTModel(com.runanywhere.sdk.public.RunAnywhere, kotlin.coroutines.Continuation<? super com.runanywhere.sdk.public.extensions.Models.ModelInfo>);
-    Code:
-       0: getstatic     #805                // Field com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeSTT.INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeSTT;
-       3: invokevirtual #806                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeSTT.getLoadedModelId:()Ljava/lang/String;
-       6: dup
-       7: ifnonnull     13
-      10: pop
-      11: aconst_null
-      12: areturn
-      13: astore_2
-      14: invokestatic  #260                // Method getRegisteredModels:()Ljava/util/List;
-      17: checkcast     #201                // class java/lang/Iterable
-      20: astore        4
-      22: aload         4
-      24: invokeinterface #277,  1          // InterfaceMethod java/lang/Iterable.iterator:()Ljava/util/Iterator;
-      29: astore        5
-      31: aload         5
-      33: invokeinterface #282,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
-      38: ifeq          77
-      41: aload         5
-      43: invokeinterface #286,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
-      48: astore        6
-      50: aload         6
-      52: checkcast     #13                 // class com/runanywhere/sdk/public/extensions/Models/ModelInfo
-      55: astore        7
-      57: iconst_0
-      58: istore        8
-      60: aload         7
-      62: invokevirtual #17                 // Method com/runanywhere/sdk/public/extensions/Models/ModelInfo.getId:()Ljava/lang/String;
-      65: aload_2
-      66: invokestatic  #795                // Method kotlin/jvm/internal/Intrinsics.areEqual:(Ljava/lang/Object;Ljava/lang/Object;)Z
-      69: ifeq          31
-      72: aload         6
-      74: goto          78
-      77: aconst_null
-      78: checkcast     #13                 // class com/runanywhere/sdk/public/extensions/Models/ModelInfo
-      81: astore_3
-      82: aload_3
-      83: dup
-      84: ifnull        88
-      87: areturn
-      88: pop
-      89: invokestatic  #262                // Method getAllBridgeModels:()Ljava/util/List;
-      92: checkcast     #201                // class java/lang/Iterable
-      95: astore        5
-      97: aload         5
-      99: invokeinterface #277,  1          // InterfaceMethod java/lang/Iterable.iterator:()Ljava/util/Iterator;
-     104: astore        6
-     106: aload         6
-     108: invokeinterface #282,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
-     113: ifeq          152
-     116: aload         6
-     118: invokeinterface #286,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
-     123: astore        7
-     125: aload         7
-     127: checkcast     #11                 // class com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo
-     130: astore        8
-     132: iconst_0
-     133: istore        9
-     135: aload         8
-     137: invokevirtual #375                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo.getModelId:()Ljava/lang/String;
-     140: aload_2
-     141: invokestatic  #795                // Method kotlin/jvm/internal/Intrinsics.areEqual:(Ljava/lang/Object;Ljava/lang/Object;)Z
-     144: ifeq          106
-     147: aload         7
-     149: goto          153
-     152: aconst_null
-     153: checkcast     #11                 // class com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo
-     156: dup
-     157: ifnull        166
-     160: invokestatic  #288                // Method toPublicModelInfo:(Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo;)Lcom/runanywhere/sdk/public/extensions/Models/ModelInfo;
-     163: goto          168
-     166: pop
-     167: aconst_null
-     168: areturn
-
-  public static final java.lang.Object loadSTTModel(com.runanywhere.sdk.public.RunAnywhere, java.lang.String, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-    Code:
-       0: aload_0
-       1: invokevirtual #226                // Method com/runanywhere/sdk/public/RunAnywhere.isInitialized:()Z
-       4: ifne          19
-       7: getstatic     #232                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
-      10: ldc           #234                // String SDK not initialized
-      12: aconst_null
-      13: iconst_2
-      14: aconst_null
-      15: invokestatic  #240                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.notInitialized$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
-      18: athrow
-      19: getstatic     #103                // Field com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry.INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry;
-      22: aload_1
-      23: invokevirtual #330                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry.get:(Ljava/lang/String;)Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo;
-      26: dup
-      27: ifnonnull     49
-      30: pop
-      31: getstatic     #232                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
-      34: aload_1
-      35: invokedynamic #746,  0            // InvokeDynamic #11:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
-      40: aconst_null
-      41: aconst_null
-      42: bipush        6
-      44: aconst_null
-      45: invokestatic  #750                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.model$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Lcom/runanywhere/sdk/foundation/errors/ErrorCode;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
-      48: athrow
-      49: astore_3
-      50: aload_3
-      51: invokevirtual #331                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo.getLocalPath:()Ljava/lang/String;
-      54: dup
-      55: ifnonnull     77
-      58: pop
-      59: getstatic     #232                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
-      62: aload_1
-      63: invokedynamic #753,  0            // InvokeDynamic #12:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
-      68: aconst_null
-      69: aconst_null
-      70: bipush        6
-      72: aconst_null
-      73: invokestatic  #750                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.model$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Lcom/runanywhere/sdk/foundation/errors/ErrorCode;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
-      76: athrow
-      77: astore        4
-      79: getstatic     #805                // Field com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeSTT.INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeSTT;
-      82: aload         4
-      84: aload_1
-      85: aload_3
-      86: invokevirtual #376                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelRegistry$ModelInfo.getName:()Ljava/lang/String;
-      89: aconst_null
-      90: bipush        8
-      92: aconst_null
-      93: invokestatic  #813                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeSTT.loadModel$default:(Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeSTT;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeSTT$ModelConfig;ILjava/lang/Object;)I
-      96: istore        5
-      98: iload         5
-     100: ifeq          123
-     103: getstatic     #232                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
-     106: aload_1
-     107: iload         5
-     109: invokedynamic #816,  0            // InvokeDynamic #14:makeConcatWithConstants:(Ljava/lang/String;I)Ljava/lang/String;
-     114: aconst_null
-     115: aconst_null
-     116: bipush        6
-     118: aconst_null
-     119: invokestatic  #819                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.stt$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Lcom/runanywhere/sdk/foundation/errors/ErrorCode;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
-     122: athrow
-     123: getstatic     #258                // Field kotlin/Unit.INSTANCE:Lkotlin/Unit;
-     126: areturn
-
-  public static final java.util.List access$getRegisteredModels();
-    Code:
-       0: invokestatic  #260                // Method getRegisteredModels:()Ljava/util/List;
-       3: areturn
-
-  public static final boolean access$requiresExtraction(java.lang.String);
-    Code:
-       0: aload_0
-       1: invokestatic  #825                // Method requiresExtraction:(Ljava/lang/String;)Z
-       4: ireturn
-
-  public static final java.lang.Object access$extractArchive(java.io.File, java.lang.String, int, java.lang.String, com.runanywhere.sdk.foundation.SDKLogger, kotlin.coroutines.Continuation);
-    Code:
-       0: aload_0
-       1: aload_1
-       2: iload_2
-       3: aload_3
-       4: aload         4
-       6: aload         5
-       8: invokestatic  #828                // Method extractArchive:(Ljava/io/File;Ljava/lang/String;ILjava/lang/String;Lcom/runanywhere/sdk/foundation/SDKLogger;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-      11: areturn
-
-  public static final void access$addToModelCache(com.runanywhere.sdk.public.extensions.Models.ModelInfo);
-    Code:
-       0: aload_0
-       1: invokestatic  #110                // Method addToModelCache:(Lcom/runanywhere/sdk/public/extensions/Models/ModelInfo;)V
+       1: invokespecial #8                  // Method java/lang/Object."<init>":()V
        4: return
 
-  public static final void access$extractTarGz(java.io.File, java.io.File, com.runanywhere.sdk.foundation.SDKLogger);
+  public final boolean isNativeAvailable();
     Code:
-       0: aload_0
-       1: aload_1
-       2: aload_2
-       3: invokestatic  #833                // Method extractTarGz:(Ljava/io/File;Ljava/io/File;Lcom/runanywhere/sdk/foundation/SDKLogger;)V
-       6: return
+       0: getstatic     #16                 // Field isNativeLibraryLoaded:Z
+       3: ireturn
 
-  public static final void access$extractTarBz2(java.io.File, java.io.File, com.runanywhere.sdk.foundation.SDKLogger);
+  public final void checkNativeLibrary();
     Code:
-       0: aload_0
-       1: aload_1
-       2: aload_2
-       3: invokestatic  #836                // Method extractTarBz2:(Ljava/io/File;Ljava/io/File;Lcom/runanywhere/sdk/foundation/SDKLogger;)V
-       6: return
+       0: nop
+       1: iconst_1
+       2: putstatic     #16                 // Field isNativeLibraryLoaded:Z
+       5: iconst_1
+       6: ldc           #21                 // String CppBridgeLLM
+       8: ldc           #23                 // String Native LLM library check passed
+      10: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+      13: goto          36
+      16: astore_1
+      17: iconst_0
+      18: putstatic     #16                 // Field isNativeLibraryLoaded:Z
+      21: iconst_3
+      22: ldc           #21                 // String CppBridgeLLM
+      24: aload_1
+      25: invokevirtual #33                 // Method java/lang/UnsatisfiedLinkError.getMessage:()Ljava/lang/String;
+      28: invokedynamic #45,  0             // InvokeDynamic #0:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+      33: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+      36: return
+    Exception table:
+       from    to  target type
+           0    13    16   Class java/lang/UnsatisfiedLinkError
 
-  public static final void access$extractZip(java.io.File, java.io.File, com.runanywhere.sdk.foundation.SDKLogger);
+  public final com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM getShared();
+    Code:
+       0: getstatic     #53                 // Field shared:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+       3: areturn
+
+  public final com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM$LLMListener getLlmListener();
+    Code:
+       0: getstatic     #60                 // Field llmListener:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMListener;
+       3: areturn
+
+  public final void setLlmListener(com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM$LLMListener);
+    Code:
+       0: aload_1
+       1: putstatic     #60                 // Field llmListener:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMListener;
+       4: return
+
+  public final com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM$StreamCallback getStreamCallback();
+    Code:
+       0: getstatic     #69                 // Field streamCallback:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$StreamCallback;
+       3: areturn
+
+  public final void setStreamCallback(com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM$StreamCallback);
+    Code:
+       0: aload_1
+       1: putstatic     #69                 // Field streamCallback:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$StreamCallback;
+       4: return
+
+  public final void register();
+    Code:
+       0: getstatic     #76                 // Field lock:Ljava/lang/Object;
+       3: astore_1
+       4: aload_1
+       5: monitorenter
+       6: nop
+       7: iconst_0
+       8: istore_2
+       9: getstatic     #79                 // Field isRegistered:Z
+      12: ifeq          19
+      15: nop
+      16: aload_1
+      17: monitorexit
+      18: return
+      19: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      22: pop
+      23: iconst_1
+      24: putstatic     #79                 // Field isRegistered:Z
+      27: iconst_1
+      28: ldc           #21                 // String CppBridgeLLM
+      30: ldc           #84                 // String LLM callbacks registered
+      32: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+      35: nop
+      36: getstatic     #89                 // Field kotlin/Unit.INSTANCE:Lkotlin/Unit;
+      39: astore_2
+      40: aload_1
+      41: monitorexit
+      42: goto          50
+      45: astore_3
+      46: aload_1
+      47: monitorexit
+      48: aload_3
+      49: athrow
+      50: return
+    Exception table:
+       from    to  target type
+           6    16    45   any
+          19    40    45   any
+          45    46    45   any
+
+  public final boolean isRegistered();
+    Code:
+       0: getstatic     #79                 // Field isRegistered:Z
+       3: ireturn
+
+  public final long getHandle() throws com.runanywhere.sdk.foundation.errors.SDKError;
+    Code:
+       0: getstatic     #76                 // Field lock:Ljava/lang/Object;
+       3: astore_1
+       4: aload_1
+       5: monitorenter
+       6: nop
+       7: iconst_0
+       8: istore_2
+       9: getstatic     #101                // Field handle:J
+      12: lconst_0
+      13: lcmp
+      14: ifne          29
+      17: getstatic     #105                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
+      20: ldc           #107                // String LLM component not created
+      22: aconst_null
+      23: iconst_2
+      24: aconst_null
+      25: invokestatic  #113                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.notInitialized$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
+      28: athrow
+      29: getstatic     #101                // Field handle:J
+      32: lstore        4
+      34: aload_1
+      35: monitorexit
+      36: lload         4
+      38: lreturn
+      39: astore_3
+      40: aload_1
+      41: monitorexit
+      42: aload_3
+      43: athrow
+    Exception table:
+       from    to  target type
+           6    34    39   any
+          39    40    39   any
+
+  public final boolean isLoaded();
+    Code:
+       0: getstatic     #76                 // Field lock:Ljava/lang/Object;
+       3: astore_1
+       4: aload_1
+       5: monitorenter
+       6: nop
+       7: iconst_0
+       8: istore_2
+       9: getstatic     #118                // Field state:I
+      12: iconst_3
+      13: if_icmpne     26
+      16: getstatic     #122                // Field loadedModelId:Ljava/lang/String;
+      19: ifnull        26
+      22: iconst_1
+      23: goto          27
+      26: iconst_0
+      27: istore_2
+      28: aload_1
+      29: monitorexit
+      30: iload_2
+      31: goto          39
+      34: astore_3
+      35: aload_1
+      36: monitorexit
+      37: aload_3
+      38: athrow
+      39: ireturn
+    Exception table:
+       from    to  target type
+           6    28    34   any
+          34    35    34   any
+
+  public final boolean isReady();
+    Code:
+       0: getstatic     #129                // Field com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMState.INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMState;
+       3: getstatic     #118                // Field state:I
+       6: invokevirtual #132                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMState.isReady:(I)Z
+       9: ireturn
+
+  public final java.lang.String getLoadedModelId();
+    Code:
+       0: getstatic     #122                // Field loadedModelId:Ljava/lang/String;
+       3: areturn
+
+  public final java.lang.String getLoadedModelPath();
+    Code:
+       0: getstatic     #137                // Field loadedModelPath:Ljava/lang/String;
+       3: areturn
+
+  public final int getState();
+    Code:
+       0: getstatic     #118                // Field state:I
+       3: ireturn
+
+  public final int create();
+    Code:
+       0: getstatic     #76                 // Field lock:Ljava/lang/Object;
+       3: astore_1
+       4: aload_1
+       5: monitorenter
+       6: nop
+       7: iconst_0
+       8: istore_2
+       9: getstatic     #101                // Field handle:J
+      12: lconst_0
+      13: lcmp
+      14: ifeq          33
+      17: iconst_3
+      18: ldc           #21                 // String CppBridgeLLM
+      20: ldc           #142                // String LLM component already created
+      22: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+      25: iconst_0
+      26: istore        11
+      28: aload_1
+      29: monitorexit
+      30: iload         11
+      32: ireturn
+      33: getstatic     #147                // Field com/runanywhere/sdk/foundation/bridge/CppBridge.INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/CppBridge;
+      36: invokevirtual #149                // Method com/runanywhere/sdk/foundation/bridge/CppBridge.isNativeLibraryLoaded:()Z
+      39: ifne          62
+      42: iconst_4
+      43: ldc           #21                 // String CppBridgeLLM
+      45: ldc           #151                // String Native library not loaded. LLM inference requires native libraries to be bundled.
+      47: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+      50: getstatic     #105                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
+      53: ldc           #153                // String Native library not available. Please ensure the native libraries are bundled in your APK.
+      55: aconst_null
+      56: iconst_2
+      57: aconst_null
+      58: invokestatic  #113                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.notInitialized$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
+      61: athrow
+      62: nop
+      63: invokestatic  #158                // Method com/runanywhere/sdk/native/bridge/RunAnywhereBridge.racLlmComponentCreate:()J
+      66: lstore_3
+      67: goto          108
+      70: astore        5
+      72: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      75: pop
+      76: iconst_0
+      77: putstatic     #16                 // Field isNativeLibraryLoaded:Z
+      80: iconst_4
+      81: ldc           #21                 // String CppBridgeLLM
+      83: aload         5
+      85: invokevirtual #33                 // Method java/lang/UnsatisfiedLinkError.getMessage:()Ljava/lang/String;
+      88: invokedynamic #161,  0            // InvokeDynamic #1:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+      93: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+      96: getstatic     #105                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
+      99: ldc           #163                // String LLM native library not available. Please ensure the LLM backend is bundled in your APK.
+     101: aconst_null
+     102: iconst_2
+     103: aconst_null
+     104: invokestatic  #113                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.notInitialized$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
+     107: athrow
+     108: lload_3
+     109: lstore        6
+     111: lload         6
+     113: lconst_0
+     114: lcmp
+     115: ifne          134
+     118: iconst_4
+     119: ldc           #21                 // String CppBridgeLLM
+     121: ldc           #165                // String Failed to create LLM component
+     123: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+     126: iconst_m1
+     127: istore        10
+     129: aload_1
+     130: monitorexit
+     131: iload         10
+     133: ireturn
+     134: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+     137: pop
+     138: lload         6
+     140: putstatic     #101                // Field handle:J
+     143: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+     146: pop
+     147: iconst_1
+     148: putstatic     #16                 // Field isNativeLibraryLoaded:Z
+     151: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+     154: iconst_1
+     155: invokespecial #169                // Method setState:(I)V
+     158: iconst_2
+     159: ldc           #21                 // String CppBridgeLLM
+     161: ldc           #171                // String LLM component created
+     163: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+     166: iconst_0
+     167: istore        9
+     169: aload_1
+     170: monitorexit
+     171: iload         9
+     173: ireturn
+     174: astore        8
+     176: aload_1
+     177: monitorexit
+     178: aload         8
+     180: athrow
+    Exception table:
+       from    to  target type
+          62    67    70   Class java/lang/UnsatisfiedLinkError
+           6    28   174   any
+          33   129   174   any
+         134   169   174   any
+         174   176   174   any
+
+  public final int loadModel(java.lang.String, java.lang.String, java.lang.String, com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM$ModelConfig);
+    Code:
+       0: getstatic     #76                 // Field lock:Ljava/lang/Object;
+       3: astore        5
+       5: aload         5
+       7: monitorenter
+       8: nop
+       9: iconst_0
+      10: istore        6
+      12: getstatic     #101                // Field handle:J
+      15: lconst_0
+      16: lcmp
+      17: ifne          43
+      20: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      23: invokevirtual #179                // Method create:()I
+      26: istore        7
+      28: iload         7
+      30: ifeq          43
+      33: iload         7
+      35: istore        11
+      37: aload         5
+      39: monitorexit
+      40: iload         11
+      42: ireturn
+      43: getstatic     #122                // Field loadedModelId:Ljava/lang/String;
+      46: ifnull        69
+      49: iconst_3
+      50: ldc           #21                 // String CppBridgeLLM
+      52: getstatic     #122                // Field loadedModelId:Ljava/lang/String;
+      55: invokedynamic #182,  0            // InvokeDynamic #2:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+      60: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+      63: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      66: invokevirtual #185                // Method unload:()V
+      69: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      72: iconst_2
+      73: invokespecial #169                // Method setState:(I)V
+      76: iconst_2
+      77: ldc           #21                 // String CppBridgeLLM
+      79: aload_2
+      80: aload_1
+      81: invokedynamic #190,  0            // InvokeDynamic #3:makeConcatWithConstants:(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+      86: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+      89: getstatic     #101                // Field handle:J
+      92: aload_1
+      93: aload_2
+      94: aload_3
+      95: invokestatic  #194                // Method com/runanywhere/sdk/native/bridge/RunAnywhereBridge.racLlmComponentLoadModel:(JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
+      98: istore        7
+     100: iload         7
+     102: ifeq          171
+     105: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+     108: bipush        6
+     110: invokespecial #169                // Method setState:(I)V
+     113: iconst_4
+     114: ldc           #21                 // String CppBridgeLLM
+     116: aload_2
+     117: iload         7
+     119: invokedynamic #199,  0            // InvokeDynamic #4:makeConcatWithConstants:(Ljava/lang/String;I)Ljava/lang/String;
+     124: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+     127: nop
+     128: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+     131: pop
+     132: getstatic     #60                 // Field llmListener:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMListener;
+     135: dup
+     136: ifnull        155
+     139: iload         7
+     141: aload_2
+     142: invokedynamic #202,  0            // InvokeDynamic #5:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+     147: invokeinterface #208,  3          // InterfaceMethod com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMListener.onError:(ILjava/lang/String;)V
+     152: goto          161
+     155: pop
+     156: goto          161
+     159: astore        8
+     161: iload         7
+     163: istore        10
+     165: aload         5
+     167: monitorexit
+     168: iload         10
+     170: ireturn
+     171: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+     174: pop
+     175: aload_2
+     176: putstatic     #122                // Field loadedModelId:Ljava/lang/String;
+     179: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+     182: pop
+     183: aload_1
+     184: putstatic     #137                // Field loadedModelPath:Ljava/lang/String;
+     187: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+     190: iconst_3
+     191: invokespecial #169                // Method setState:(I)V
+     194: iconst_2
+     195: ldc           #21                 // String CppBridgeLLM
+     197: aload_2
+     198: invokedynamic #211,  0            // InvokeDynamic #6:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+     203: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+     206: iconst_0
+     207: iconst_2
+     208: iconst_0
+     209: invokestatic  #217                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelAssignment.setAssignmentStatusCallback:(III)Z
+     212: pop
+     213: iconst_0
+     214: iconst_3
+     215: invokestatic  #223                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeState.setComponentStateCallback:(II)V
+     218: nop
+     219: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+     222: pop
+     223: getstatic     #60                 // Field llmListener:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMListener;
+     226: dup
+     227: ifnull        240
+     230: aload_2
+     231: aload_1
+     232: invokeinterface #227,  3          // InterfaceMethod com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMListener.onModelLoaded:(Ljava/lang/String;Ljava/lang/String;)V
+     237: goto          262
+     240: pop
+     241: goto          262
+     244: astore        8
+     246: iconst_3
+     247: ldc           #21                 // String CppBridgeLLM
+     249: aload         8
+     251: invokevirtual #228                // Method java/lang/Exception.getMessage:()Ljava/lang/String;
+     254: invokedynamic #231,  0            // InvokeDynamic #7:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+     259: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+     262: iconst_0
+     263: istore        9
+     265: aload         5
+     267: monitorexit
+     268: iload         9
+     270: ireturn
+     271: astore        7
+     273: aload         5
+     275: monitorexit
+     276: aload         7
+     278: athrow
+    Exception table:
+       from    to  target type
+         127   156   159   Class java/lang/Exception
+         218   241   244   Class java/lang/Exception
+           8    37   271   any
+          43   165   271   any
+         171   265   271   any
+         271   273   271   any
+
+  public static int loadModel$default(com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM, java.lang.String, java.lang.String, java.lang.String, com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM$ModelConfig, int, java.lang.Object);
+    Code:
+       0: iload         5
+       2: iconst_4
+       3: iand
+       4: ifeq          9
+       7: aconst_null
+       8: astore_3
+       9: iload         5
+      11: bipush        8
+      13: iand
+      14: ifeq          25
+      17: getstatic     #248                // Field com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$ModelConfig.Companion:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$ModelConfig$Companion;
+      20: invokevirtual #254                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$ModelConfig$Companion.getDEFAULT:()Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$ModelConfig;
+      23: astore        4
+      25: aload_0
+      26: aload_1
+      27: aload_2
+      28: aload_3
+      29: aload         4
+      31: invokevirtual #256                // Method loadModel:(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$ModelConfig;)I
+      34: ireturn
+
+  public final com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM$GenerationResult generate(java.lang.String, com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM$GenerationConfig) throws com.runanywhere.sdk.foundation.errors.SDKError;
+    Code:
+       0: getstatic     #76                 // Field lock:Ljava/lang/Object;
+       3: astore_3
+       4: aload_3
+       5: monitorenter
+       6: nop
+       7: iconst_0
+       8: istore        4
+      10: getstatic     #101                // Field handle:J
+      13: lconst_0
+      14: lcmp
+      15: ifeq          25
+      18: getstatic     #118                // Field state:I
+      21: iconst_3
+      22: if_icmpeq     40
+      25: getstatic     #105                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
+      28: ldc_w         #260                // String LLM component not ready for generation
+      31: aconst_null
+      32: aconst_null
+      33: bipush        6
+      35: aconst_null
+      36: invokestatic  #264                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.llm$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Lcom/runanywhere/sdk/foundation/errors/ErrorCode;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
+      39: athrow
+      40: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      43: pop
+      44: iconst_0
+      45: putstatic     #267                // Field isCancelled:Z
+      48: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      51: iconst_4
+      52: invokespecial #169                // Method setState:(I)V
+      55: iconst_1
+      56: ldc           #21                 // String CppBridgeLLM
+      58: aload_1
+      59: invokevirtual #270                // Method java/lang/String.length:()I
+      62: invokedynamic #275,  0            // InvokeDynamic #8:makeConcatWithConstants:(I)Ljava/lang/String;
+      67: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+      70: nop
+      71: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      74: pop
+      75: getstatic     #60                 // Field llmListener:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMListener;
+      78: dup
+      79: ifnull        91
+      82: aload_1
+      83: invokeinterface #279,  2          // InterfaceMethod com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMListener.onGenerationStarted:(Ljava/lang/String;)V
+      88: goto          97
+      91: pop
+      92: goto          97
+      95: astore        5
+      97: invokestatic  #284                // Method java/lang/System.currentTimeMillis:()J
+     100: lstore        6
+     102: nop
+     103: getstatic     #101                // Field handle:J
+     106: aload_1
+     107: aload_2
+     108: invokevirtual #289                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$GenerationConfig.toJson:()Ljava/lang/String;
+     111: invokestatic  #293                // Method com/runanywhere/sdk/native/bridge/RunAnywhereBridge.racLlmComponentGenerate:(JLjava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+     114: dup
+     115: ifnonnull     134
+     118: pop
+     119: getstatic     #105                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
+     122: ldc_w         #295                // String Generation failed: null result
+     125: aconst_null
+     126: aconst_null
+     127: bipush        6
+     129: aconst_null
+     130: invokestatic  #264                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.llm$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Lcom/runanywhere/sdk/foundation/errors/ErrorCode;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
+     133: athrow
+     134: astore        8
+     136: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+     139: aload         8
+     141: invokestatic  #284                // Method java/lang/System.currentTimeMillis:()J
+     144: lload         6
+     146: lsub
+     147: invokespecial #299                // Method parseGenerationResult:(Ljava/lang/String;J)Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$GenerationResult;
+     150: astore        9
+     152: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+     155: iconst_3
+     156: invokespecial #169                // Method setState:(I)V
+     159: iconst_1
+     160: ldc           #21                 // String CppBridgeLLM
+     162: aload         9
+     164: invokevirtual #304                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$GenerationResult.getTokensGenerated:()I
+     167: aload         9
+     169: invokevirtual #308                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$GenerationResult.getTokensPerSecond:()F
+     172: invokedynamic #313,  0            // InvokeDynamic #9:makeConcatWithConstants:(IF)Ljava/lang/String;
+     177: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+     180: nop
+     181: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+     184: pop
+     185: getstatic     #60                 // Field llmListener:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMListener;
+     188: dup
+     189: ifnull        202
+     192: aload         9
+     194: invokeinterface #317,  2          // InterfaceMethod com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMListener.onGenerationCompleted:(Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$GenerationResult;)V
+     199: goto          208
+     202: pop
+     203: goto          208
+     206: astore        10
+     208: aload         9
+     210: astore        11
+     212: aload_3
+     213: monitorexit
+     214: aload         11
+     216: areturn
+     217: astore        9
+     219: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+     222: iconst_3
+     223: invokespecial #169                // Method setState:(I)V
+     226: aload         9
+     228: instanceof    #97                 // class com/runanywhere/sdk/foundation/errors/SDKError
+     231: ifeq          242
+     234: aload         9
+     236: checkcast     #93                 // class java/lang/Throwable
+     239: goto          266
+     242: getstatic     #105                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
+     245: aload         9
+     247: invokevirtual #228                // Method java/lang/Exception.getMessage:()Ljava/lang/String;
+     250: invokedynamic #320,  0            // InvokeDynamic #10:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+     255: aconst_null
+     256: aconst_null
+     257: bipush        6
+     259: aconst_null
+     260: invokestatic  #264                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.llm$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Lcom/runanywhere/sdk/foundation/errors/ErrorCode;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
+     263: checkcast     #93                 // class java/lang/Throwable
+     266: athrow
+     267: astore        5
+     269: aload_3
+     270: monitorexit
+     271: aload         5
+     273: athrow
+    Exception table:
+       from    to  target type
+          70    92    95   Class java/lang/Exception
+         180   203   206   Class java/lang/Exception
+         102   212   217   Class java/lang/Exception
+           6   212   267   any
+         217   267   267   any
+         267   269   267   any
+
+  public static com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM$GenerationResult generate$default(com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM, java.lang.String, com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM$GenerationConfig, int, java.lang.Object) throws com.runanywhere.sdk.foundation.errors.SDKError;
+    Code:
+       0: iload_3
+       1: iconst_2
+       2: iand
+       3: ifeq          13
+       6: getstatic     #331                // Field com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$GenerationConfig.Companion:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$GenerationConfig$Companion;
+       9: invokevirtual #336                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$GenerationConfig$Companion.getDEFAULT:()Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$GenerationConfig;
+      12: astore_2
+      13: aload_0
+      14: aload_1
+      15: aload_2
+      16: invokevirtual #338                // Method generate:(Ljava/lang/String;Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$GenerationConfig;)Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$GenerationResult;
+      19: areturn
+
+  public final com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM$GenerationResult generateStream(java.lang.String, com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM$GenerationConfig, com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM$StreamCallback) throws com.runanywhere.sdk.foundation.errors.SDKError;
+    Code:
+       0: getstatic     #76                 // Field lock:Ljava/lang/Object;
+       3: astore        4
+       5: aload         4
+       7: monitorenter
+       8: nop
+       9: iconst_0
+      10: istore        5
+      12: getstatic     #101                // Field handle:J
+      15: lconst_0
+      16: lcmp
+      17: ifeq          27
+      20: getstatic     #118                // Field state:I
+      23: iconst_3
+      24: if_icmpeq     42
+      27: getstatic     #105                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
+      30: ldc_w         #260                // String LLM component not ready for generation
+      33: aconst_null
+      34: aconst_null
+      35: bipush        6
+      37: aconst_null
+      38: invokestatic  #264                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.llm$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Lcom/runanywhere/sdk/foundation/errors/ErrorCode;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
+      41: athrow
+      42: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      45: pop
+      46: iconst_0
+      47: putstatic     #267                // Field isCancelled:Z
+      50: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      53: pop
+      54: aload_3
+      55: putstatic     #69                 // Field streamCallback:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$StreamCallback;
+      58: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      61: iconst_4
+      62: invokespecial #169                // Method setState:(I)V
+      65: iconst_1
+      66: ldc           #21                 // String CppBridgeLLM
+      68: aload_1
+      69: invokevirtual #270                // Method java/lang/String.length:()I
+      72: invokedynamic #343,  0            // InvokeDynamic #11:makeConcatWithConstants:(I)Ljava/lang/String;
+      77: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+      80: nop
+      81: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      84: pop
+      85: getstatic     #60                 // Field llmListener:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMListener;
+      88: dup
+      89: ifnull        101
+      92: aload_1
+      93: invokeinterface #279,  2          // InterfaceMethod com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMListener.onGenerationStarted:(Ljava/lang/String;)V
+      98: goto          107
+     101: pop
+     102: goto          107
+     105: astore        6
+     107: invokestatic  #284                // Method java/lang/System.currentTimeMillis:()J
+     110: lstore        7
+     112: nop
+     113: aload_3
+     114: invokedynamic #361,  0            // InvokeDynamic #12:onToken:(Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$StreamCallback;)Lcom/runanywhere/sdk/native/bridge/RunAnywhereBridge$TokenCallback;
+     119: astore        9
+     121: getstatic     #101                // Field handle:J
+     124: aload_1
+     125: aload_2
+     126: invokevirtual #289                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$GenerationConfig.toJson:()Ljava/lang/String;
+     129: aload         9
+     131: invokestatic  #365                // Method com/runanywhere/sdk/native/bridge/RunAnywhereBridge.racLlmComponentGenerateStreamWithCallback:(JLjava/lang/String;Ljava/lang/String;Lcom/runanywhere/sdk/native/bridge/RunAnywhereBridge$TokenCallback;)Ljava/lang/String;
+     134: dup
+     135: ifnonnull     154
+     138: pop
+     139: getstatic     #105                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
+     142: ldc_w         #367                // String Streaming generation failed: null result
+     145: aconst_null
+     146: aconst_null
+     147: bipush        6
+     149: aconst_null
+     150: invokestatic  #264                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.llm$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Lcom/runanywhere/sdk/foundation/errors/ErrorCode;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
+     153: athrow
+     154: astore        10
+     156: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+     159: aload         10
+     161: invokestatic  #284                // Method java/lang/System.currentTimeMillis:()J
+     164: lload         7
+     166: lsub
+     167: invokespecial #299                // Method parseGenerationResult:(Ljava/lang/String;J)Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$GenerationResult;
+     170: astore        11
+     172: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+     175: iconst_3
+     176: invokespecial #169                // Method setState:(I)V
+     179: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+     182: pop
+     183: aconst_null
+     184: putstatic     #69                 // Field streamCallback:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$StreamCallback;
+     187: iconst_1
+     188: ldc           #21                 // String CppBridgeLLM
+     190: aload         11
+     192: invokevirtual #304                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$GenerationResult.getTokensGenerated:()I
+     195: invokedynamic #370,  0            // InvokeDynamic #13:makeConcatWithConstants:(I)Ljava/lang/String;
+     200: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+     203: nop
+     204: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+     207: pop
+     208: getstatic     #60                 // Field llmListener:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMListener;
+     211: dup
+     212: ifnull        225
+     215: aload         11
+     217: invokeinterface #317,  2          // InterfaceMethod com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMListener.onGenerationCompleted:(Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$GenerationResult;)V
+     222: goto          231
+     225: pop
+     226: goto          231
+     229: astore        12
+     231: aload         11
+     233: astore        13
+     235: aload         4
+     237: monitorexit
+     238: aload         13
+     240: areturn
+     241: astore        10
+     243: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+     246: iconst_3
+     247: invokespecial #169                // Method setState:(I)V
+     250: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+     253: pop
+     254: aconst_null
+     255: putstatic     #69                 // Field streamCallback:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$StreamCallback;
+     258: aload         10
+     260: instanceof    #97                 // class com/runanywhere/sdk/foundation/errors/SDKError
+     263: ifeq          274
+     266: aload         10
+     268: checkcast     #93                 // class java/lang/Throwable
+     271: goto          298
+     274: getstatic     #105                // Field com/runanywhere/sdk/foundation/errors/SDKError.Companion:Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;
+     277: aload         10
+     279: invokevirtual #228                // Method java/lang/Exception.getMessage:()Ljava/lang/String;
+     282: invokedynamic #373,  0            // InvokeDynamic #14:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+     287: aconst_null
+     288: aconst_null
+     289: bipush        6
+     291: aconst_null
+     292: invokestatic  #264                // Method com/runanywhere/sdk/foundation/errors/SDKError$Companion.llm$default:(Lcom/runanywhere/sdk/foundation/errors/SDKError$Companion;Ljava/lang/String;Lcom/runanywhere/sdk/foundation/errors/ErrorCode;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/runanywhere/sdk/foundation/errors/SDKError;
+     295: checkcast     #93                 // class java/lang/Throwable
+     298: athrow
+     299: astore        6
+     301: aload         4
+     303: monitorexit
+     304: aload         6
+     306: athrow
+    Exception table:
+       from    to  target type
+          80   102   105   Class java/lang/Exception
+         203   226   229   Class java/lang/Exception
+         112   235   241   Class java/lang/Exception
+           8   235   299   any
+         241   299   299   any
+         299   301   299   any
+
+  public static com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM$GenerationResult generateStream$default(com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM, java.lang.String, com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM$GenerationConfig, com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM$StreamCallback, int, java.lang.Object) throws com.runanywhere.sdk.foundation.errors.SDKError;
+    Code:
+       0: iload         4
+       2: iconst_2
+       3: iand
+       4: ifeq          14
+       7: getstatic     #331                // Field com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$GenerationConfig.Companion:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$GenerationConfig$Companion;
+      10: invokevirtual #336                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$GenerationConfig$Companion.getDEFAULT:()Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$GenerationConfig;
+      13: astore_2
+      14: aload_0
+      15: aload_1
+      16: aload_2
+      17: aload_3
+      18: invokevirtual #385                // Method generateStream:(Ljava/lang/String;Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$GenerationConfig;Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$StreamCallback;)Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$GenerationResult;
+      21: areturn
+
+  public final void cancel();
+    Code:
+       0: getstatic     #76                 // Field lock:Ljava/lang/Object;
+       3: astore_1
+       4: aload_1
+       5: monitorenter
+       6: nop
+       7: iconst_0
+       8: istore_2
+       9: getstatic     #118                // Field state:I
+      12: iconst_4
+      13: if_icmpeq     20
+      16: nop
+      17: aload_1
+      18: monitorexit
+      19: return
+      20: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      23: pop
+      24: iconst_1
+      25: putstatic     #267                // Field isCancelled:Z
+      28: iconst_1
+      29: ldc           #21                 // String CppBridgeLLM
+      31: ldc_w         #388                // String Cancelling generation
+      34: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+      37: getstatic     #101                // Field handle:J
+      40: invokestatic  #392                // Method com/runanywhere/sdk/native/bridge/RunAnywhereBridge.racLlmComponentCancel:(J)I
+      43: istore_2
+      44: aload_1
+      45: monitorexit
+      46: goto          54
+      49: astore_3
+      50: aload_1
+      51: monitorexit
+      52: aload_3
+      53: athrow
+      54: return
+    Exception table:
+       from    to  target type
+           6    17    49   any
+          20    44    49   any
+          49    50    49   any
+
+  public final void unload();
+    Code:
+       0: getstatic     #76                 // Field lock:Ljava/lang/Object;
+       3: astore_1
+       4: aload_1
+       5: monitorenter
+       6: nop
+       7: iconst_0
+       8: istore_2
+       9: getstatic     #122                // Field loadedModelId:Ljava/lang/String;
+      12: ifnonnull     19
+      15: nop
+      16: aload_1
+      17: monitorexit
+      18: return
+      19: getstatic     #122                // Field loadedModelId:Ljava/lang/String;
+      22: dup
+      23: ifnonnull     30
+      26: pop
+      27: aload_1
+      28: monitorexit
+      29: return
+      30: astore_3
+      31: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      34: iconst_5
+      35: invokespecial #169                // Method setState:(I)V
+      38: iconst_2
+      39: ldc           #21                 // String CppBridgeLLM
+      41: aload_3
+      42: invokedynamic #396,  0            // InvokeDynamic #15:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+      47: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+      50: getstatic     #101                // Field handle:J
+      53: invokestatic  #399                // Method com/runanywhere/sdk/native/bridge/RunAnywhereBridge.racLlmComponentUnload:(J)I
+      56: pop
+      57: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      60: pop
+      61: aconst_null
+      62: putstatic     #122                // Field loadedModelId:Ljava/lang/String;
+      65: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      68: pop
+      69: aconst_null
+      70: putstatic     #137                // Field loadedModelPath:Ljava/lang/String;
+      73: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      76: iconst_1
+      77: invokespecial #169                // Method setState:(I)V
+      80: iconst_0
+      81: iconst_0
+      82: iconst_0
+      83: invokestatic  #217                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeModelAssignment.setAssignmentStatusCallback:(III)Z
+      86: pop
+      87: iconst_0
+      88: iconst_1
+      89: invokestatic  #223                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeState.setComponentStateCallback:(II)V
+      92: nop
+      93: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      96: pop
+      97: getstatic     #60                 // Field llmListener:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMListener;
+     100: dup
+     101: ifnull        116
+     104: aload_3
+     105: invokeinterface #402,  2          // InterfaceMethod com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMListener.onModelUnloaded:(Ljava/lang/String;)V
+     110: getstatic     #89                 // Field kotlin/Unit.INSTANCE:Lkotlin/Unit;
+     113: goto          118
+     116: pop
+     117: aconst_null
+     118: astore        4
+     120: goto          146
+     123: astore        5
+     125: iconst_3
+     126: ldc           #21                 // String CppBridgeLLM
+     128: aload         5
+     130: invokevirtual #228                // Method java/lang/Exception.getMessage:()Ljava/lang/String;
+     133: invokedynamic #405,  0            // InvokeDynamic #16:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+     138: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+     141: getstatic     #89                 // Field kotlin/Unit.INSTANCE:Lkotlin/Unit;
+     144: astore        4
+     146: aload         4
+     148: nop
+     149: astore_2
+     150: aload_1
+     151: monitorexit
+     152: goto          160
+     155: astore_3
+     156: aload_1
+     157: monitorexit
+     158: aload_3
+     159: athrow
+     160: return
+    Exception table:
+       from    to  target type
+          92   120   123   Class java/lang/Exception
+           6    16   155   any
+          19    27   155   any
+          30   150   155   any
+         155   156   155   any
+
+  public final void destroy();
+    Code:
+       0: getstatic     #76                 // Field lock:Ljava/lang/Object;
+       3: astore_1
+       4: aload_1
+       5: monitorenter
+       6: nop
+       7: iconst_0
+       8: istore_2
+       9: getstatic     #101                // Field handle:J
+      12: lconst_0
+      13: lcmp
+      14: ifne          21
+      17: nop
+      18: aload_1
+      19: monitorexit
+      20: return
+      21: getstatic     #122                // Field loadedModelId:Ljava/lang/String;
+      24: ifnull        33
+      27: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      30: invokevirtual #185                // Method unload:()V
+      33: iconst_2
+      34: ldc           #21                 // String CppBridgeLLM
+      36: ldc_w         #410                // String Destroying LLM component
+      39: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+      42: getstatic     #101                // Field handle:J
+      45: invokestatic  #414                // Method com/runanywhere/sdk/native/bridge/RunAnywhereBridge.racLlmComponentDestroy:(J)V
+      48: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      51: pop
+      52: lconst_0
+      53: putstatic     #101                // Field handle:J
+      56: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      59: iconst_0
+      60: invokespecial #169                // Method setState:(I)V
+      63: iconst_0
+      64: iconst_0
+      65: invokestatic  #223                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeState.setComponentStateCallback:(II)V
+      68: nop
+      69: getstatic     #89                 // Field kotlin/Unit.INSTANCE:Lkotlin/Unit;
+      72: astore_2
+      73: aload_1
+      74: monitorexit
+      75: goto          83
+      78: astore_3
+      79: aload_1
+      80: monitorexit
+      81: aload_3
+      82: athrow
+      83: return
+    Exception table:
+       from    to  target type
+           6    18    78   any
+          21    73    78   any
+          78    79    78   any
+
+  public static final boolean streamTokenCallback(java.lang.String);
+    Code:
+       0: getstatic     #267                // Field isCancelled:Z
+       3: ifeq          8
+       6: iconst_0
+       7: ireturn
+       8: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      11: pop
+      12: getstatic     #69                 // Field streamCallback:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$StreamCallback;
+      15: dup
+      16: ifnonnull     22
+      19: pop
+      20: iconst_1
+      21: ireturn
+      22: astore_1
+      23: nop
+      24: aload_1
+      25: aload_0
+      26: invokeinterface #419,  2          // InterfaceMethod com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$StreamCallback.onToken:(Ljava/lang/String;)Z
+      31: istore_2
+      32: goto          53
+      35: astore_3
+      36: iconst_3
+      37: ldc           #21                 // String CppBridgeLLM
+      39: aload_3
+      40: invokevirtual #228                // Method java/lang/Exception.getMessage:()Ljava/lang/String;
+      43: invokedynamic #422,  0            // InvokeDynamic #17:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+      48: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+      51: iconst_1
+      52: istore_2
+      53: iload_2
+      54: ireturn
+    Exception table:
+       from    to  target type
+          23    32    35   Class java/lang/Exception
+
+  public static final void progressCallback(float);
+    Code:
+       0: iconst_1
+       1: ldc           #21                 // String CppBridgeLLM
+       3: fload_0
+       4: bipush        100
+       6: i2f
+       7: fmul
+       8: f2i
+       9: invokedynamic #428,  0            // InvokeDynamic #18:makeConcatWithConstants:(I)Ljava/lang/String;
+      14: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+      17: return
+
+  public static final int getStateCallback();
+    Code:
+       0: getstatic     #118                // Field state:I
+       3: ireturn
+
+  public static final boolean isLoadedCallback();
+    Code:
+       0: getstatic     #122                // Field loadedModelId:Ljava/lang/String;
+       3: ifnull        17
+       6: getstatic     #118                // Field state:I
+       9: iconst_3
+      10: if_icmpne     17
+      13: iconst_1
+      14: goto          18
+      17: iconst_0
+      18: ireturn
+
+  public static final java.lang.String getLoadedModelIdCallback();
+    Code:
+       0: getstatic     #122                // Field loadedModelId:Ljava/lang/String;
+       3: areturn
+
+  private static final native void nativeSetLLMCallbacks();
+
+  private static final native void nativeUnsetLLMCallbacks();
+
+  public static final native long nativeCreate();
+
+  public static final native int nativeLoadModel(long, java.lang.String, java.lang.String);
+
+  public static final native java.lang.String nativeGenerate(long, java.lang.String, java.lang.String);
+
+  public static final native java.lang.String nativeGenerateStream(long, java.lang.String, java.lang.String);
+
+  public static final native void nativeCancel(long);
+
+  public static final native void nativeUnload(long);
+
+  public static final native void nativeDestroy(long);
+
+  public static final native int nativeGetContextSize(long);
+
+  public static final native int nativeTokenize(long, java.lang.String);
+
+  public final void unregister();
+    Code:
+       0: getstatic     #76                 // Field lock:Ljava/lang/Object;
+       3: astore_1
+       4: aload_1
+       5: monitorenter
+       6: nop
+       7: iconst_0
+       8: istore_2
+       9: getstatic     #79                 // Field isRegistered:Z
+      12: ifne          19
+      15: nop
+      16: aload_1
+      17: monitorexit
+      18: return
+      19: getstatic     #101                // Field handle:J
+      22: lconst_0
+      23: lcmp
+      24: ifeq          33
+      27: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      30: invokevirtual #449                // Method destroy:()V
+      33: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      36: pop
+      37: aconst_null
+      38: putstatic     #60                 // Field llmListener:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMListener;
+      41: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      44: pop
+      45: aconst_null
+      46: putstatic     #69                 // Field streamCallback:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$StreamCallback;
+      49: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      52: pop
+      53: iconst_0
+      54: putstatic     #79                 // Field isRegistered:Z
+      57: nop
+      58: getstatic     #89                 // Field kotlin/Unit.INSTANCE:Lkotlin/Unit;
+      61: astore_2
+      62: aload_1
+      63: monitorexit
+      64: goto          72
+      67: astore_3
+      68: aload_1
+      69: monitorexit
+      70: aload_3
+      71: athrow
+      72: return
+    Exception table:
+       from    to  target type
+           6    16    67   any
+          19    62    67   any
+          67    68    67   any
+
+  private final void setState(int);
+    Code:
+       0: getstatic     #118                // Field state:I
+       3: istore_2
+       4: iload_1
+       5: iload_2
+       6: if_icmpeq     76
+       9: iload_1
+      10: putstatic     #118                // Field state:I
+      13: iconst_1
+      14: ldc           #21                 // String CppBridgeLLM
+      16: getstatic     #129                // Field com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMState.INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMState;
+      19: iload_2
+      20: invokevirtual #453                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMState.getName:(I)Ljava/lang/String;
+      23: getstatic     #129                // Field com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMState.INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMState;
+      26: iload_1
+      27: invokevirtual #453                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMState.getName:(I)Ljava/lang/String;
+      30: invokedynamic #456,  0            // InvokeDynamic #19:makeConcatWithConstants:(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+      35: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+      38: nop
+      39: getstatic     #60                 // Field llmListener:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMListener;
+      42: dup
+      43: ifnull        56
+      46: iload_2
+      47: iload_1
+      48: invokeinterface #459,  3          // InterfaceMethod com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMListener.onStateChanged:(II)V
+      53: goto          76
+      56: pop
+      57: goto          76
+      60: astore_3
+      61: iconst_3
+      62: ldc           #21                 // String CppBridgeLLM
+      64: aload_3
+      65: invokevirtual #228                // Method java/lang/Exception.getMessage:()Ljava/lang/String;
+      68: invokedynamic #462,  0            // InvokeDynamic #20:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+      73: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+      76: return
+    Exception table:
+       from    to  target type
+          38    57    60   Class java/lang/Exception
+
+  private final com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM$GenerationResult parseGenerationResult(java.lang.String, long);
+    Code:
+       0: aload_1
+       1: ldc_w         #466                // String text
+       4: invokestatic  #469                // Method parseGenerationResult$extractString:(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+       7: astore        4
+       9: aload_1
+      10: ldc_w         #471                // String tokens_generated
+      13: invokestatic  #475                // Method parseGenerationResult$extractInt:(Ljava/lang/String;Ljava/lang/String;)I
+      16: istore        5
+      18: aload_1
+      19: ldc_w         #477                // String tokens_evaluated
+      22: invokestatic  #475                // Method parseGenerationResult$extractInt:(Ljava/lang/String;Ljava/lang/String;)I
+      25: istore        6
+      27: aload_1
+      28: ldc_w         #479                // String stop_reason
+      31: invokestatic  #475                // Method parseGenerationResult$extractInt:(Ljava/lang/String;Ljava/lang/String;)I
+      34: istore        7
+      36: lload_2
+      37: lconst_0
+      38: lcmp
+      39: ifle          55
+      42: iload         5
+      44: i2f
+      45: ldc_w         #480                // float 1000.0f
+      48: fmul
+      49: lload_2
+      50: l2f
+      51: fdiv
+      52: goto          62
+      55: aload_1
+      56: ldc_w         #482                // String tokens_per_second
+      59: invokestatic  #486                // Method parseGenerationResult$extractFloat:(Ljava/lang/String;Ljava/lang/String;)F
+      62: fstore        8
+      64: new           #301                // class com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$GenerationResult
+      67: dup
+      68: aload         4
+      70: iload         5
+      72: iload         6
+      74: iload         7
+      76: lload_2
+      77: fload         8
+      79: invokespecial #489                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$GenerationResult."<init>":(Ljava/lang/String;IIIJF)V
+      82: areturn
+
+  private final java.lang.String escapeJson(java.lang.String);
+    Code:
+       0: aload_1
+       1: ldc_w         #498                // String \\
+       4: ldc_w         #500                // String \\\\
+       7: iconst_0
+       8: iconst_4
+       9: aconst_null
+      10: invokestatic  #506                // Method kotlin/text/StringsKt.replace$default:(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)Ljava/lang/String;
+      13: ldc_w         #508                // String \"
+      16: ldc_w         #510                // String \\\"
+      19: iconst_0
+      20: iconst_4
+      21: aconst_null
+      22: invokestatic  #506                // Method kotlin/text/StringsKt.replace$default:(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)Ljava/lang/String;
+      25: ldc_w         #512                // String \n
+      28: ldc_w         #514                // String \\n
+      31: iconst_0
+      32: iconst_4
+      33: aconst_null
+      34: invokestatic  #506                // Method kotlin/text/StringsKt.replace$default:(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)Ljava/lang/String;
+      37: ldc_w         #516                // String \r
+      40: ldc_w         #518                // String \\r
+      43: iconst_0
+      44: iconst_4
+      45: aconst_null
+      46: invokestatic  #506                // Method kotlin/text/StringsKt.replace$default:(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)Ljava/lang/String;
+      49: ldc_w         #520                // String \t
+      52: ldc_w         #522                // String \\t
+      55: iconst_0
+      56: iconst_4
+      57: aconst_null
+      58: invokestatic  #506                // Method kotlin/text/StringsKt.replace$default:(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)Ljava/lang/String;
+      61: areturn
+
+  private final java.lang.String unescapeJson(java.lang.String);
+    Code:
+       0: aload_1
+       1: ldc_w         #514                // String \\n
+       4: ldc_w         #512                // String \n
+       7: iconst_0
+       8: iconst_4
+       9: aconst_null
+      10: invokestatic  #506                // Method kotlin/text/StringsKt.replace$default:(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)Ljava/lang/String;
+      13: ldc_w         #518                // String \\r
+      16: ldc_w         #516                // String \r
+      19: iconst_0
+      20: iconst_4
+      21: aconst_null
+      22: invokestatic  #506                // Method kotlin/text/StringsKt.replace$default:(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)Ljava/lang/String;
+      25: ldc_w         #522                // String \\t
+      28: ldc_w         #520                // String \t
+      31: iconst_0
+      32: iconst_4
+      33: aconst_null
+      34: invokestatic  #506                // Method kotlin/text/StringsKt.replace$default:(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)Ljava/lang/String;
+      37: ldc_w         #510                // String \\\"
+      40: ldc_w         #508                // String \"
+      43: iconst_0
+      44: iconst_4
+      45: aconst_null
+      46: invokestatic  #506                // Method kotlin/text/StringsKt.replace$default:(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)Ljava/lang/String;
+      49: ldc_w         #500                // String \\\\
+      52: ldc_w         #498                // String \\
+      55: iconst_0
+      56: iconst_4
+      57: aconst_null
+      58: invokestatic  #506                // Method kotlin/text/StringsKt.replace$default:(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)Ljava/lang/String;
+      61: areturn
+
+  public final int getContextSize();
+    Code:
+       0: getstatic     #76                 // Field lock:Ljava/lang/Object;
+       3: astore_1
+       4: aload_1
+       5: monitorenter
+       6: nop
+       7: iconst_0
+       8: istore_2
+       9: getstatic     #101                // Field handle:J
+      12: lconst_0
+      13: lcmp
+      14: ifeq          24
+      17: getstatic     #118                // Field state:I
+      20: iconst_3
+      21: if_icmpeq     32
+      24: iconst_0
+      25: istore        5
+      27: aload_1
+      28: monitorexit
+      29: iload         5
+      31: ireturn
+      32: getstatic     #101                // Field handle:J
+      35: invokestatic  #528                // Method com/runanywhere/sdk/native/bridge/RunAnywhereBridge.racLlmComponentGetContextSize:(J)I
+      38: istore        4
+      40: aload_1
+      41: monitorexit
+      42: iload         4
+      44: ireturn
+      45: astore_3
+      46: aload_1
+      47: monitorexit
+      48: aload_3
+      49: athrow
+    Exception table:
+       from    to  target type
+           6    27    45   any
+          32    40    45   any
+          45    46    45   any
+
+  public final int tokenize(java.lang.String);
+    Code:
+       0: getstatic     #76                 // Field lock:Ljava/lang/Object;
+       3: astore_2
+       4: aload_2
+       5: monitorenter
+       6: nop
+       7: iconst_0
+       8: istore_3
+       9: getstatic     #101                // Field handle:J
+      12: lconst_0
+      13: lcmp
+      14: ifeq          24
+      17: getstatic     #118                // Field state:I
+      20: iconst_3
+      21: if_icmpeq     32
+      24: iconst_0
+      25: istore        6
+      27: aload_2
+      28: monitorexit
+      29: iload         6
+      31: ireturn
+      32: getstatic     #101                // Field handle:J
+      35: aload_1
+      36: invokestatic  #534                // Method com/runanywhere/sdk/native/bridge/RunAnywhereBridge.racLlmComponentTokenize:(JLjava/lang/String;)I
+      39: istore        5
+      41: aload_2
+      42: monitorexit
+      43: iload         5
+      45: ireturn
+      46: astore        4
+      48: aload_2
+      49: monitorexit
+      50: aload         4
+      52: athrow
+    Exception table:
+       from    to  target type
+           6    27    46   any
+          32    41    46   any
+          46    48    46   any
+
+  public final java.lang.String getStateSummary();
+    Code:
+       0: new           #538                // class java/lang/StringBuilder
+       3: dup
+       4: invokespecial #539                // Method java/lang/StringBuilder."<init>":()V
+       7: astore_1
+       8: aload_1
+       9: astore_2
+      10: iconst_0
+      11: istore_3
+      12: aload_2
+      13: getstatic     #129                // Field com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMState.INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMState;
+      16: getstatic     #118                // Field state:I
+      19: invokevirtual #453                // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$LLMState.getName:(I)Ljava/lang/String;
+      22: invokedynamic #542,  0            // InvokeDynamic #21:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+      27: invokevirtual #546                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      30: pop
+      31: getstatic     #122                // Field loadedModelId:Ljava/lang/String;
+      34: ifnull        50
+      37: aload_2
+      38: getstatic     #122                // Field loadedModelId:Ljava/lang/String;
+      41: invokedynamic #549,  0            // InvokeDynamic #22:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+      46: invokevirtual #546                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      49: pop
+      50: getstatic     #101                // Field handle:J
+      53: lconst_0
+      54: lcmp
+      55: ifeq          71
+      58: aload_2
+      59: getstatic     #101                // Field handle:J
+      62: invokedynamic #554,  0            // InvokeDynamic #23:makeConcatWithConstants:(J)Ljava/lang/String;
+      67: invokevirtual #546                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      70: pop
+      71: nop
+      72: aload_1
+      73: invokevirtual #557                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      76: areturn
+
+  private static final boolean generateStream$lambda$7$lambda$6(com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM$StreamCallback, java.lang.String);
+    Code:
+       0: nop
+       1: aload_0
+       2: aload_1
+       3: invokeinterface #419,  2          // InterfaceMethod com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM$StreamCallback.onToken:(Ljava/lang/String;)Z
+       8: istore_2
+       9: goto          30
+      12: astore_3
+      13: iconst_3
+      14: ldc           #21                 // String CppBridgeLLM
+      16: aload_3
+      17: invokevirtual #228                // Method java/lang/Exception.getMessage:()Ljava/lang/String;
+      20: invokedynamic #422,  0            // InvokeDynamic #17:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+      25: invokestatic  #29                 // Method com/runanywhere/sdk/foundation/bridge/extensions/CppBridgePlatformAdapter.logCallback:(ILjava/lang/String;Ljava/lang/String;)V
+      28: iconst_1
+      29: istore_2
+      30: iload_2
+      31: ireturn
+    Exception table:
+       from    to  target type
+           0     9    12   Class java/lang/Exception
+
+  private static final java.lang.String parseGenerationResult$extractString(java.lang.String, java.lang.String);
+    Code:
+       0: aload_1
+       1: invokedynamic #564,  0            // InvokeDynamic #24:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+       6: astore_2
+       7: new           #566                // class kotlin/text/Regex
+      10: dup
+      11: aload_2
+      12: invokespecial #568                // Method kotlin/text/Regex."<init>":(Ljava/lang/String;)V
+      15: astore_3
+      16: aload_3
+      17: aload_0
+      18: checkcast     #570                // class java/lang/CharSequence
+      21: iconst_0
+      22: iconst_2
+      23: aconst_null
+      24: invokestatic  #574                // Method kotlin/text/Regex.find$default:(Lkotlin/text/Regex;Ljava/lang/CharSequence;IILjava/lang/Object;)Lkotlin/text/MatchResult;
+      27: astore        4
+      29: aload         4
+      31: ifnull        94
+      34: aload         4
+      36: invokeinterface #580,  1          // InterfaceMethod kotlin/text/MatchResult.getGroupValues:()Ljava/util/List;
+      41: astore        5
+      43: aload         5
+      45: ifnull        94
+      48: aload         5
+      50: iconst_1
+      51: invokeinterface #586,  2          // InterfaceMethod java/util/List.get:(I)Ljava/lang/Object;
+      56: checkcast     #241                // class java/lang/String
+      59: astore        6
+      61: aload         6
+      63: ifnull        94
+      66: aload         6
+      68: astore        8
+      70: iconst_0
+      71: istore        9
+      73: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      76: aload         8
+      78: invokespecial #588                // Method unescapeJson:(Ljava/lang/String;)Ljava/lang/String;
+      81: nop
+      82: astore        7
+      84: aload         7
+      86: ifnull        94
+      89: aload         7
+      91: goto          97
+      94: ldc_w         #590                // String
+      97: areturn
+
+  private static final int parseGenerationResult$extractInt(java.lang.String, java.lang.String);
+    Code:
+       0: aload_1
+       1: invokedynamic #600,  0            // InvokeDynamic #25:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+       6: astore_2
+       7: new           #566                // class kotlin/text/Regex
+      10: dup
+      11: aload_2
+      12: invokespecial #568                // Method kotlin/text/Regex."<init>":(Ljava/lang/String;)V
+      15: astore_3
+      16: aload_3
+      17: aload_0
+      18: checkcast     #570                // class java/lang/CharSequence
+      21: iconst_0
+      22: iconst_2
+      23: aconst_null
+      24: invokestatic  #574                // Method kotlin/text/Regex.find$default:(Lkotlin/text/Regex;Ljava/lang/CharSequence;IILjava/lang/Object;)Lkotlin/text/MatchResult;
+      27: astore        4
+      29: aload         4
+      31: ifnull        86
+      34: aload         4
+      36: invokeinterface #580,  1          // InterfaceMethod kotlin/text/MatchResult.getGroupValues:()Ljava/util/List;
+      41: astore        5
+      43: aload         5
+      45: ifnull        86
+      48: aload         5
+      50: iconst_1
+      51: invokeinterface #586,  2          // InterfaceMethod java/util/List.get:(I)Ljava/lang/Object;
+      56: checkcast     #241                // class java/lang/String
+      59: astore        6
+      61: aload         6
+      63: ifnull        86
+      66: aload         6
+      68: invokestatic  #604                // Method kotlin/text/StringsKt.toIntOrNull:(Ljava/lang/String;)Ljava/lang/Integer;
+      71: astore        7
+      73: aload         7
+      75: ifnull        86
+      78: aload         7
+      80: invokevirtual #609                // Method java/lang/Integer.intValue:()I
+      83: goto          87
+      86: iconst_0
+      87: ireturn
+
+  private static final float parseGenerationResult$extractFloat(java.lang.String, java.lang.String);
+    Code:
+       0: aload_1
+       1: invokedynamic #612,  0            // InvokeDynamic #26:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+       6: astore_2
+       7: new           #566                // class kotlin/text/Regex
+      10: dup
+      11: aload_2
+      12: invokespecial #568                // Method kotlin/text/Regex."<init>":(Ljava/lang/String;)V
+      15: astore_3
+      16: aload_3
+      17: aload_0
+      18: checkcast     #570                // class java/lang/CharSequence
+      21: iconst_0
+      22: iconst_2
+      23: aconst_null
+      24: invokestatic  #574                // Method kotlin/text/Regex.find$default:(Lkotlin/text/Regex;Ljava/lang/CharSequence;IILjava/lang/Object;)Lkotlin/text/MatchResult;
+      27: astore        4
+      29: aload         4
+      31: ifnull        86
+      34: aload         4
+      36: invokeinterface #580,  1          // InterfaceMethod kotlin/text/MatchResult.getGroupValues:()Ljava/util/List;
+      41: astore        5
+      43: aload         5
+      45: ifnull        86
+      48: aload         5
+      50: iconst_1
+      51: invokeinterface #586,  2          // InterfaceMethod java/util/List.get:(I)Ljava/lang/Object;
+      56: checkcast     #241                // class java/lang/String
+      59: astore        6
+      61: aload         6
+      63: ifnull        86
+      66: aload         6
+      68: invokestatic  #616                // Method kotlin/text/StringsKt.toFloatOrNull:(Ljava/lang/String;)Ljava/lang/Float;
+      71: astore        7
+      73: aload         7
+      75: ifnull        86
+      78: aload         7
+      80: invokevirtual #621                // Method java/lang/Float.floatValue:()F
+      83: goto          87
+      86: fconst_0
+      87: freturn
+
+  public static final java.lang.String access$escapeJson(com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM, java.lang.String);
     Code:
        0: aload_0
        1: aload_1
-       2: aload_2
-       3: invokestatic  #839                // Method extractZip:(Ljava/io/File;Ljava/io/File;Lcom/runanywhere/sdk/foundation/SDKLogger;)V
-       6: return
+       2: invokespecial #625                // Method escapeJson:(Ljava/lang/String;)Ljava/lang/String;
+       5: areturn
 
   static {};
     Code:
-       0: getstatic     #843                // Field com/runanywhere/sdk/foundation/SDKLogger.Companion:Lcom/runanywhere/sdk/foundation/SDKLogger$Companion;
-       3: invokevirtual #849                // Method com/runanywhere/sdk/foundation/SDKLogger$Companion.getModels:()Lcom/runanywhere/sdk/foundation/SDKLogger;
-       6: putstatic     #114                // Field modelsLogger:Lcom/runanywhere/sdk/foundation/SDKLogger;
-       9: new           #264                // class java/util/ArrayList
-      12: dup
-      13: invokespecial #326                // Method java/util/ArrayList."<init>":()V
-      16: checkcast     #188                // class java/util/List
-      19: putstatic     #160                // Field registeredModels:Ljava/util/List;
-      22: new           #4                  // class java/lang/Object
-      25: dup
-      26: invokespecial #850                // Method java/lang/Object."<init>":()V
-      29: putstatic     #156                // Field modelCacheLock:Ljava/lang/Object;
-      32: new           #4                  // class java/lang/Object
-      35: dup
-      36: invokespecial #850                // Method java/lang/Object."<init>":()V
-      39: putstatic     #243                // Field scanLock:Ljava/lang/Object;
-      42: return
+       0: new           #2                  // class com/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM
+       3: dup
+       4: invokespecial #628                // Method "<init>":()V
+       7: putstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      10: new           #4                  // class java/lang/Object
+      13: dup
+      14: invokespecial #8                  // Method java/lang/Object."<init>":()V
+      17: putstatic     #76                 // Field lock:Ljava/lang/Object;
+      20: getstatic     #82                 // Field INSTANCE:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      23: putstatic     #53                 // Field shared:Lcom/runanywhere/sdk/foundation/bridge/extensions/CppBridgeLLM;
+      26: return
 }

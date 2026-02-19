@@ -118,15 +118,33 @@ object LLMPerformanceBooster {
      *
      * Memory math (6GB device with SmolLM2-360M at 2048 context):
      *   5000 chars ≈ 1250 tokens → fits in 2048 ctx (leaves 798 for system+answer)
+     *
+     * ULTIMATE FIX: KV cache cleared on EVERY prompt = no cumulative buildup.
+     * Safe to use generous limits for detailed PDF answers.
      */
-    fun getRecommendedDocLimit(context: Context): Int {
+    fun getRecommendedDocLimit(context: Context, modelMemoryMB: Long = 400): Int {
         val deviceRAM = getDeviceRAM(context)
+        // Large models (≥700MB) need much more native memory for KV cache + scratch.
+        val isLargeModel = modelMemoryMB >= 700
+        // Tiny models (<500MB, e.g. SmolLM2-360M) have only 2048-token context window.
+        // SDK allocates KV cache for 8192 tokens → ~1GB native memory → SIGABRT if prompt too long.
+        // Must drastically limit doc context to prevent context overflow + native OOM.
+        val isTinyModel = modelMemoryMB < 500
         return when {
-            deviceRAM >= 8192 -> 12000  // 8GB+ → 12K chars (fits 4096 ctx window)
-            deviceRAM >= 6144 -> 5000   // 6GB → 5K chars (fits 2048 ctx with SmolLM2)
-            deviceRAM >= 4096 -> 3500   // 4GB → 3.5K chars
-            deviceRAM >= 3072 -> 2000   // 3GB → 2K chars
-            else -> 1200                // 2GB → 1.2K minimum
+            // ── Tiny models: 2048 context window, budget ~200 tokens for system+question ──
+            isTinyModel -> when {
+                deviceRAM >= 6144 -> 1000    // ~250 tokens doc, leaves room for 256 output
+                deviceRAM >= 4096 -> 800     // ~200 tokens doc
+                else -> 500                  // Minimal
+            }
+            deviceRAM >= 8192 && isLargeModel -> 3500   // 8GB + big model
+            deviceRAM >= 8192 -> 5000                    // 8GB + small model
+            deviceRAM >= 6144 && isLargeModel -> 1500    // 6GB + big model → ~375 tokens of doc
+            deviceRAM >= 6144 -> 2500                    // 6GB + small model
+            deviceRAM >= 4096 && isLargeModel -> 1200    // 4GB + big model
+            deviceRAM >= 4096 -> 2000                    // 4GB + small model
+            deviceRAM >= 3072 -> 800                     // 3GB
+            else -> 500                                  // 2GB
         }
     }
 
@@ -135,32 +153,58 @@ object LLMPerformanceBooster {
      * This must fit within (contextLength - maxTokens) token budget.
      *
      * Roughly: 1 token ≈ 4 chars. So:
-     *   2048 ctx - 384 maxTokens = 1664 input tokens ≈ 6500 chars
+     *   2048 ctx - 512 maxTokens = 1536 input tokens ≈ 6000 chars
      *   4096 ctx - 768 maxTokens = 3328 input tokens ≈ 13000 chars
+     *
+     * ULTIMATE FIX: KV cache cleared every prompt = safe to use full context window.
      */
-    fun getMaxSafePromptLength(context: Context): Int {
+    fun getMaxSafePromptLength(context: Context, modelMemoryMB: Long = 400): Int {
         val deviceRAM = getDeviceRAM(context)
+        val isLargeModel = modelMemoryMB >= 700
+        val isTinyModel = modelMemoryMB < 500
+        // Tiny models: 2048 ctx - 256 maxTokens = 1792 input tokens ≈ 1200 chars safe max.
         return when {
-            deviceRAM >= 8192 -> 13000  // 8GB+: ~3250 tokens in 4096 ctx
-            deviceRAM >= 6144 -> 6500   // 6GB: ~1625 tokens in 2048 ctx
-            deviceRAM >= 4096 -> 4500   // 4GB: ~1125 tokens
-            deviceRAM >= 3072 -> 2500   // 3GB: ~625 tokens
-            else -> 1500                // 2GB: ~375 tokens
+            isTinyModel -> when {
+                deviceRAM >= 6144 -> 1400    // ~350 input tokens + 256 output = 606 < 2048
+                deviceRAM >= 4096 -> 1200    // ~300 input tokens + 256 output = 556 < 2048
+                else -> 800                  // Minimal
+            }
+            deviceRAM >= 8192 && isLargeModel -> 4000    // 8GB + big model
+            deviceRAM >= 8192 -> 6000                     // 8GB + small model
+            deviceRAM >= 6144 && isLargeModel -> 2000     // 6GB + big model → ~500 tokens → ~20s TTFT
+            deviceRAM >= 6144 -> 3000                     // 6GB + small model
+            deviceRAM >= 4096 && isLargeModel -> 1500     // 4GB + big model
+            deviceRAM >= 4096 -> 2500                     // 4GB + small model
+            deviceRAM >= 3072 -> 1200                     // 3GB
+            else -> 800                                   // 2GB
         }
     }
 
     /**
      * Get recommended max tokens based on available memory.
      * Increased to allow detailed, document-grounded responses.
+     *
+     * BALANCED FIX: 512 tokens ≈ 300-400 words (enough for detailed explanations).
+     * Combined with aggressive KV cache reset to prevent crashes.
+     *
+     * Note: 300 words ≈ 400-450 tokens, so 512 tokens gives room for detailed answers.
      */
-    fun getRecommendedMaxTokens(context: Context): Int {
+    fun getRecommendedMaxTokens(context: Context, modelMemoryMB: Long = 400): Int {
         val deviceRAM = getDeviceRAM(context)
+        val isLargeModel = modelMemoryMB >= 700
+        val isTinyModel = modelMemoryMB < 500
+        // Tiny models: only 2048 context window. 256 output tokens ≈ 180 words.
+        // Must leave enough room for prompt (system + doc + question).
         return when {
-            deviceRAM >= 8192 -> 768   // 8GB+ → long detailed answers
-            deviceRAM >= 6144 -> 384   // 6GB → only value proven safe (512 caused SIGABRT)
-            deviceRAM >= 4096 -> 256   // 4GB → decent detail
-            deviceRAM >= 3072 -> 192   // 3GB → reasonable answers
-            else -> 128                // 2GB → compact but complete
+            isTinyModel -> 256   // 256 output + ~300 input = 556 tokens, safe for 2048 ctx
+            deviceRAM >= 8192 && isLargeModel -> 600   // 8GB + big model
+            deviceRAM >= 8192 -> 768                    // 8GB + small model
+            deviceRAM >= 6144 && isLargeModel -> 512    // 6GB + big model → proper detailed answers
+            deviceRAM >= 6144 -> 512                    // 6GB + small model
+            deviceRAM >= 4096 && isLargeModel -> 384    // 4GB + big model
+            deviceRAM >= 4096 -> 512                    // 4GB + small model
+            deviceRAM >= 3072 -> 384                    // 3GB
+            else -> 256                                 // 2GB
         }
     }
 

@@ -20,5 +20,15 @@ class AppPreferences(context: Context) {
     var selectedLLMModel: String
         get() = prefs.getString("llm_model", "smollm2-360m-instruct-q8_0") ?: "smollm2-360m-instruct-q8_0"
         set(v) = prefs.edit().putString("llm_model", v).apply()
+
+    /** TTS accent — "indian", "us", "uk", "australian", "canadian", etc. */
+    var ttsAccent: String
+        get() = prefs.getString("tts_accent", "indian") ?: "indian"
+        set(v) = prefs.edit().putString("tts_accent", v).apply()
+
+    /** Use Android's built-in TTS (supports accents) instead of Piper. Default true. */
+    var useNativeTTS: Boolean
+        get() = prefs.getBoolean("use_native_tts", true)
+        set(v) = prefs.edit().putBoolean("use_native_tts", v).apply()
 }
 

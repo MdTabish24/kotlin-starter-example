@@ -197,16 +197,25 @@ fun ChatScreen(
                                         listState.animateScrollToItem(messages.size)
 
                                         try {
-                                            // Free native memory: unload STT/TTS before LLM generation
-                                            if (modelService.isSTTLoaded || modelService.isTTSLoaded) {
+                                            // Only unload STT/TTS if native heap is actually high (>50% device RAM).
+                                            // Blind unload corrupts native allocator state → SIGABRT during generation.
+                                            val chatNativeHeap = LLMPerformanceBooster.getNativeHeapUsageMB()
+                                            val chatDeviceRAM = LLMPerformanceBooster.getDeviceRAM(context)
+                                            if (chatNativeHeap > (chatDeviceRAM * 0.50).toLong() && (modelService.isSTTLoaded || modelService.isTTSLoaded)) {
                                                 modelService.freeMemoryForLLM()
-                                                kotlinx.coroutines.delay(500)
+                                                kotlinx.coroutines.delay(1000)
                                             }
 
                                             // Safety: auto-switch to smaller model if current one is too large
                                             modelService.ensureSafeModelForGeneration(context)
 
-                                            val adaptiveMaxTokens = LLMPerformanceBooster.getRecommendedMaxTokens(context)
+                                            // Skip KV reset — the unload/reload cycle causes SIGABRT
+                                            // on 6GB devices. Qwen 2.5 has 8192 context, plenty for chat.
+                                            // modelService.resetLLMContext()
+                                            kotlinx.coroutines.delay(200)
+
+                                            val chatModelMem = (com.runanywhere.kotlin_starter_example.services.ModelService.getLLMOption(modelService.activeLLMModelId)?.memoryRequirement ?: 400_000_000L) / (1024L * 1024L)
+                                            val adaptiveMaxTokens = LLMPerformanceBooster.getRecommendedMaxTokens(context, chatModelMem)
                                             val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                                                 com.runanywhere.sdk.public.RunAnywhere.generate(
                                                     userMessage,

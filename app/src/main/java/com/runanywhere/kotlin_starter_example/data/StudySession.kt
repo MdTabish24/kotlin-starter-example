@@ -29,7 +29,8 @@ data class StudySession(
     val createdAt: Long = System.currentTimeMillis(),
     var updatedAt: Long = System.currentTimeMillis(),
     var documentName: String? = null,
-    var documentContent: String? = null,
+    var documentContent: String? = null,  // Kept for in-memory use only — NOT serialized to JSON
+    var hasDocument: Boolean = false,     // Flag: doc stored in separate file
     var notes: String = "",
     var messages: MutableList<SessionMessage> = mutableListOf(),
     var smartNotesEnabled: Boolean = false,
@@ -41,7 +42,10 @@ data class StudySession(
         put("createdAt", createdAt)
         put("updatedAt", updatedAt)
         put("documentName", documentName ?: "")
-        put("documentContent", documentContent ?: "")
+        // NOTE: documentContent is NOT saved here anymore!
+        // It's stored in a separate file via SmartDocumentSearch.saveDocumentToFile()
+        // This prevents the session JSON from being 500KB+ and eating memory on load.
+        put("hasDocument", hasDocument)
         put("notes", notes)
         put("smartNotesEnabled", smartNotesEnabled)
         put("diagramsEnabled", diagramsEnabled)
@@ -58,13 +62,17 @@ data class StudySession(
                     msgs.add(SessionMessage.fromJson(arr.getJSONObject(i)))
                 }
             }
+            // Backward compat: if old session has documentContent, detect it
+            val oldDocContent = json.optString("documentContent", "").ifEmpty { null }
+            val docName = json.optString("documentName", "").ifEmpty { null }
             return StudySession(
                 id = json.optString("id", java.util.UUID.randomUUID().toString()),
                 title = json.optString("title", "Untitled"),
                 createdAt = json.optLong("createdAt", System.currentTimeMillis()),
                 updatedAt = json.optLong("updatedAt", System.currentTimeMillis()),
-                documentName = json.optString("documentName", "").ifEmpty { null },
-                documentContent = json.optString("documentContent", "").ifEmpty { null },
+                documentName = docName,
+                documentContent = oldDocContent,  // Only loaded from old sessions for migration
+                hasDocument = json.optBoolean("hasDocument", oldDocContent != null),
                 notes = json.optString("notes", ""),
                 messages = msgs,
                 smartNotesEnabled = json.optBoolean("smartNotesEnabled", false),

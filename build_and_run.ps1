@@ -139,26 +139,33 @@ Add-Content -Path $ERR -Value "`n── RUNTIME LOGS ──"
 Add-Content -Path $ERR -Value "Started: $timestamp"
 Add-Content -Path $ERR -Value "App PID: $pidDisplay`n"
 
+$crashDetected = $false
+
 if ($appPid) {
-    # PID-based filtering: shows ALL logs from our app
+    # PID-based filtering: shows ALL logs from our app + FULL CRASH DUMPS
     & $ADB logcat -v time --pid=$appPid 2>&1 | ForEach-Object {
         $line = $_.ToString()
         if (-not $line) { return }
 
-        if ($line -match "FATAL|AndroidRuntime|CRASH") {
+        # CRITICAL: Capture native crashes with full stack trace
+        if ($line -match "FATAL|AndroidRuntime|CRASH|signal|SIGABRT|SIGSEGV|SIGILL|native crash|tombstone|DEBUG\s+:|backtrace:|#\d+\s+pc|Build fingerprint|Abort message|Cause:") {
             Write-Host "  [FATAL] $line" -ForegroundColor Red
             Add-Content -Path $ERR -Value "[FATAL] $line"
+            $crashDetected = $true
         }
-        elseif ($line -match " E[/ ]|Error|Exception") {
+        # Capture all errors including native library errors
+        elseif ($line -match " E[/ ]|Error|Exception|abort|librac_|librunanywhere|NativeAlloc|OutOfMemory") {
             Write-Host "  [ERROR] $line" -ForegroundColor Red
             Add-Content -Path $ERR -Value "[ERROR] $line"
         }
-        elseif ($line -match " W[/ ]|Warning|warn") {
+        elseif ($line -match " W[/ ]|Warning|warn|WaitForGcToComplete") {
             Write-Host "  [WARN]  $line" -ForegroundColor Yellow
             Add-Content -Path $ERR -Value "[WARN] $line"
         }
-        elseif ($line -match "ModelService|RunAnywhere|STT|TTS|LLM|download|load|transcri|synthes") {
+        elseif ($line -match "ModelService|RunAnywhere|STT|TTS|LLM|download|load|transcri|synthes|generate|KV cache|Native heap") {
             Write-Host "  [AI]    $line" -ForegroundColor Magenta
+            # Log AI operations to file too for debugging
+            Add-Content -Path $ERR -Value "[AI] $line"
         }
         elseif ($line -match " I[/ ]") {
             Write-Host "  [INFO]  $line" -ForegroundColor Gray
@@ -168,22 +175,23 @@ if ($appPid) {
         }
     }
 } else {
-    # Fallback: tag-based filtering
-    Write-Host "  [!] Could not get PID, using tag filter" -ForegroundColor Yellow
+    # Fallback: tag-based filtering with enhanced crash detection
+    Write-Host "  [!] Could not get PID, using enhanced tag filter" -ForegroundColor Yellow
     Write-Host ""
 
-    $noisePattern = "Looper|ViewRootImpl|Choreographer|OpenGLRenderer|gralloc|SurfaceFlinger|hwcomposer|InputDispatcher|InputMethodManager|StatusBar|SystemUI|Zygote|xiaomi|miui"
+    $noisePattern = "Looper|ViewRootImpl|Choreographer|OpenGLRenderer|gralloc|SurfaceFlinger|hwcomposer|InputDispatcher|InputMethodManager|StatusBar|SystemUI|Zygote"
 
-    & $ADB logcat -v time "ModelService:V" "YouLearn:V" "RunAnywhere:V" "runanywhere:V" "AndroidRuntime:E" "System.err:W" "ActivityManager:I" "*:F" "*:S" 2>&1 | ForEach-Object {
+    # Enhanced filter to catch native crashes
+    & $ADB logcat -v time "ModelService:V" "YouLearn:V" "RunAnywhere:V" "runanywhere:V" "AndroidRuntime:E" "System.err:W" "ActivityManager:I" "DEBUG:I" "libc:E" "*:F" "*:S" 2>&1 | ForEach-Object {
         $line = $_.ToString()
         if (-not $line) { return }
         if ($line -match $noisePattern) { return }
 
-        if ($line -match "FATAL|AndroidRuntime|CRASH") {
+        if ($line -match "FATAL|AndroidRuntime|CRASH|signal|SIGABRT|SIGSEGV|native crash|tombstone|DEBUG\s+:") {
             Write-Host "  [FATAL] $line" -ForegroundColor Red
             Add-Content -Path $ERR -Value "[FATAL] $line"
         }
-        elseif ($line -match " E[/ ]|Error|Exception") {
+        elseif ($line -match " E[/ ]|Error|Exception|abort|librac_|NativeAlloc") {
             Write-Host "  [ERROR] $line" -ForegroundColor Red
             Add-Content -Path $ERR -Value "[ERROR] $line"
         }
@@ -195,6 +203,56 @@ if ($appPid) {
             Write-Host "  [LOG]   $line" -ForegroundColor Gray
         }
     }
+}
+
+# ── Capture tombstone if crash detected ──
+if ($crashDetected) {
+    Write-Host ""
+    Write-Host "  ========================================" -ForegroundColor Red
+    Write-Host "    CRASH DETECTED! Fetching details..." -ForegroundColor Red
+    Write-Host "  ========================================" -ForegroundColor Red
+    Start-Sleep -Seconds 2
+    
+    Add-Content -Path $ERR -Value "`n`n── CRASH ANALYSIS ──"
+    
+    # Get latest tombstone
+    $tombstones = & $ADB shell "ls -t /data/tombstones/tombstone_* 2>/dev/null | head -1" 2>$null
+    if ($tombstones) {
+        Write-Host "  Extracting tombstone: $tombstones" -ForegroundColor Yellow
+        $tombstoneContent = & $ADB shell "cat $tombstones" 2>$null
+        Add-Content -Path $ERR -Value "`nTOMBSTONE FILE: $tombstones`n"
+        Add-Content -Path $ERR -Value $tombstoneContent
+        
+        # Extract key crash info
+        $abortMsg = $tombstoneContent | Select-String -Pattern "Abort message:" -Context 0,3
+        $signal = $tombstoneContent | Select-String -Pattern "signal \d+" -Context 0,1
+        $backtrace = $tombstoneContent | Select-String -Pattern "backtrace:" -Context 0,20
+        
+        Write-Host ""
+        Write-Host "  ── CRASH ROOT CAUSE ──" -ForegroundColor Red
+        if ($abortMsg) {
+            Write-Host "  $abortMsg" -ForegroundColor Yellow
+        }
+        if ($signal) {
+            Write-Host "  $signal" -ForegroundColor Yellow
+        }
+        if ($backtrace) {
+            Write-Host "  Stack trace saved to errors.txt" -ForegroundColor Yellow
+        }
+        Write-Host ""
+    } else {
+        Write-Host "  No tombstone found (may need root access)" -ForegroundColor DarkGray
+    }
+    
+    # Get native heap info
+    Write-Host "  Checking native memory state..." -ForegroundColor Cyan
+    $meminfo = & $ADB shell "dumpsys meminfo $PKG | grep -A 20 'Native Heap'" 2>$null
+    if ($meminfo) {
+        Add-Content -Path $ERR -Value "`n── NATIVE MEMORY AT CRASH ──`n"
+        Add-Content -Path $ERR -Value $meminfo
+        Write-Host "  Native memory info saved to errors.txt" -ForegroundColor Green
+    }
+    Write-Host ""
 }
 
 Write-Host ""

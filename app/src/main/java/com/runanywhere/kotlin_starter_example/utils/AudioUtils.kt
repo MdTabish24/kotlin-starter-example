@@ -13,8 +13,11 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 /**
- * Simple audio recorder for STT.
- * Records 16kHz mono PCM audio.
+ * Audio recorder with Voice Activity Detection (VAD).
+ * Records 16kHz mono PCM. When VAD is enabled, automatically stops
+ * recording after 1.5 seconds of silence — no button press needed.
+ *
+ * Exposes [currentAmplitude] (0–1) for real-time UI visualization.
  */
 class SimpleAudioRecorder {
     private var audioRecord: AudioRecord? = null
@@ -23,13 +26,32 @@ class SimpleAudioRecorder {
     private var isRecording = false
     private val audioData = ByteArrayOutputStream()
 
+    /** Current audio amplitude (0.0 – 1.0) for UI waveform / glow effects. */
+    @Volatile
+    var currentAmplitude: Float = 0f
+        private set
+
+    /** Fired from the recording thread when VAD detects silence after speech. */
+    @Volatile
+    var onSilenceDetected: (() -> Unit)? = null
+
     companion object {
         const val SAMPLE_RATE = 16000
         const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
         const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
+
+        // ── VAD tuning ──
+        private const val SILENCE_THRESHOLD_RMS = 450    // RMS below this = silence
+        private const val SILENCE_DURATION_MS  = 1500L   // 1.5s silence → auto-stop
+        private const val MIN_SPEECH_BYTES     = 16000   // ≈0.5s — ignore very short clips
     }
 
-    fun startRecording(): Boolean {
+    /**
+     * Start recording.
+     * @param enableVAD When true, recording auto-stops after [SILENCE_DURATION_MS]
+     *   of silence once speech has been detected. [onSilenceDetected] is invoked.
+     */
+    fun startRecording(enableVAD: Boolean = false): Boolean {
         val bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT)
         if (bufferSize == AudioRecord.ERROR || bufferSize == AudioRecord.ERROR_BAD_VALUE) return false
 
@@ -45,8 +67,12 @@ class SimpleAudioRecorder {
             if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) return false
 
             audioData.reset()
+            currentAmplitude = 0f
             audioRecord?.startRecording()
             isRecording = true
+
+            var silenceStartMs = 0L
+            var hasSpeechStarted = false
 
             Thread {
                 val buffer = ByteArray(bufferSize)
@@ -55,6 +81,37 @@ class SimpleAudioRecorder {
                     if (read > 0) {
                         synchronized(audioData) {
                             audioData.write(buffer, 0, read)
+                        }
+
+                        // ── Compute RMS amplitude for UI + VAD ──
+                        var sum = 0L
+                        val samples = read / 2
+                        var i = 0
+                        while (i < read - 1) {
+                            val lo = buffer[i].toInt() and 0xFF
+                            val hi = buffer[i + 1].toInt() shl 8
+                            val sample = lo or hi
+                            val signed = if (sample > 32767) sample - 65536 else sample
+                            sum += signed.toLong() * signed.toLong()
+                            i += 2
+                        }
+                        val rms = if (samples > 0) Math.sqrt(sum.toDouble() / samples).toFloat() else 0f
+                        currentAmplitude = (rms / 6000f).coerceIn(0f, 1f)
+
+                        // ── VAD: detect silence after user has spoken ──
+                        if (enableVAD) {
+                            if (rms > SILENCE_THRESHOLD_RMS) {
+                                hasSpeechStarted = true
+                                silenceStartMs = 0L
+                            } else if (hasSpeechStarted && audioData.size() > MIN_SPEECH_BYTES) {
+                                if (silenceStartMs == 0L) {
+                                    silenceStartMs = System.currentTimeMillis()
+                                } else if (System.currentTimeMillis() - silenceStartMs >= SILENCE_DURATION_MS) {
+                                    // Silence after speech → auto-stop
+                                    onSilenceDetected?.invoke()
+                                    break
+                                }
+                            }
                         }
                     }
                 }
@@ -67,6 +124,7 @@ class SimpleAudioRecorder {
 
     fun stopRecording(): ByteArray {
         isRecording = false
+        currentAmplitude = 0f
         audioRecord?.stop()
         audioRecord?.release()
         audioRecord = null

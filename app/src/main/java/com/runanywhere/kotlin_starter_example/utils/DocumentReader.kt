@@ -28,7 +28,7 @@ object DocumentReader {
             val name = getFileName(context, uri) ?: "document"
             val mimeType = context.contentResolver.getType(uri) ?: ""
             val extension = name.substringAfterLast('.', "").lowercase()
-            
+
             Log.d(TAG, "Reading document: $name (mime: $mimeType, ext: $extension)")
 
             val content = when {
@@ -39,14 +39,14 @@ object DocumentReader {
                 // Word documents
                 extension == "docx" || mimeType == "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ->
                     readDOCX(context, uri)
-                    
+
                 extension == "doc" || mimeType == "application/msword" ->
                     readDOCX(context, uri) // POI can sometimes handle .doc too
 
                 // PowerPoint
                 extension == "pptx" || mimeType == "application/vnd.openxmlformats-officedocument.presentationml.presentation" ->
                     readPPTX(context, uri)
-                    
+
                 extension == "ppt" || mimeType == "application/vnd.ms-powerpoint" ->
                     readPPTX(context, uri)
 
@@ -94,29 +94,44 @@ object DocumentReader {
     }
 
     private fun readPDFWithIText(context: Context, uri: Uri): String? {
+        var pdfReader: com.itextpdf.kernel.pdf.PdfReader? = null
+        var pdfDoc: com.itextpdf.kernel.pdf.PdfDocument? = null
+        var inputStream: InputStream? = null
+        
         return try {
-            context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                val pdfReader = com.itextpdf.kernel.pdf.PdfReader(inputStream)
-                val pdfDoc = com.itextpdf.kernel.pdf.PdfDocument(pdfReader)
-                val sb = StringBuilder()
+            inputStream = context.contentResolver.openInputStream(uri)
+            if (inputStream == null) return null
+            
+            pdfReader = com.itextpdf.kernel.pdf.PdfReader(inputStream)
+            pdfDoc = com.itextpdf.kernel.pdf.PdfDocument(pdfReader)
+            val sb = StringBuilder()
 
-                for (i in 1..pdfDoc.numberOfPages) {
-                    val page = pdfDoc.getPage(i)
-                    val strategy = com.itextpdf.kernel.pdf.canvas.parser.listener.LocationTextExtractionStrategy()
-                    val text = com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor.getTextFromPage(page, strategy)
-                    if (text.isNotBlank()) {
-                        sb.append("--- Page $i ---\n")
-                        sb.append(text.trim())
-                        sb.append("\n\n")
-                    }
+            for (i in 1..pdfDoc.numberOfPages) {
+                val page = pdfDoc.getPage(i)
+                val strategy = com.itextpdf.kernel.pdf.canvas.parser.listener.LocationTextExtractionStrategy()
+                val text = com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor.getTextFromPage(page, strategy)
+                if (text.isNotBlank()) {
+                    sb.append(text.trim())
+                    sb.append("\n\n")
                 }
-
-                pdfDoc.close()
-                sb.toString()
             }
+
+            cleanExtractedText(sb.toString())
         } catch (e: Exception) {
             Log.w(TAG, "iText extraction failed: ${e.message}")
             null
+        } finally {
+            // CRITICAL: Aggressive cleanup to prevent native memory leak
+            try { pdfDoc?.close() } catch (_: Exception) {}
+            try { pdfReader?.close() } catch (_: Exception) {}
+            try { inputStream?.close() } catch (_: Exception) {}
+            // Explicitly null out references so GC can collect
+            pdfDoc = null
+            pdfReader = null
+            inputStream = null
+            // Force GC to reclaim native memory immediately
+            System.gc()
+            System.runFinalization()
         }
     }
 
@@ -126,9 +141,9 @@ object DocumentReader {
             val renderer = PdfRenderer(parcelFileDescriptor)
             val sb = StringBuilder()
             val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-            
+
             val maxPages = minOf(renderer.pageCount, 20) // Limit to 20 pages for performance
-            
+
             for (i in 0 until maxPages) {
                 val page = renderer.openPage(i)
                 // Render at 2x for better OCR quality
@@ -145,7 +160,7 @@ object DocumentReader {
                 try {
                     val result = recognizer.process(image).await()
                     if (result.text.isNotBlank()) {
-                        sb.append("--- Page ${i + 1} ---\n")
+                        // No page markers — small LLMs confuse them with content
                         sb.append(result.text.trim())
                         sb.append("\n\n")
                     }
@@ -157,7 +172,7 @@ object DocumentReader {
 
             renderer.close()
             parcelFileDescriptor.close()
-            sb.toString()
+            cleanExtractedText(sb.toString())
         } catch (e: Exception) {
             Log.e(TAG, "PDF OCR failed: ${e.message}", e)
             null
@@ -216,12 +231,12 @@ object DocumentReader {
                 val sb = StringBuilder()
 
                 pptx.slides.forEachIndexed { index, slide ->
-                    sb.append("=== Slide ${index + 1} ===\n")
+                    // No slide markers — small LLMs confuse them with content
 
                     // Get title
                     slide.title?.let { title ->
                         if (title.isNotBlank()) {
-                            sb.append("# $title\n\n")
+                            sb.append("$title\n\n")
                         }
                     }
 
@@ -248,13 +263,14 @@ object DocumentReader {
                         }
                     }
 
-                    // Notes
+                    // Notes — include as plain text, no markers
                     slide.notes?.let { notes ->
                         for (shape in notes.shapes) {
                             if (shape is org.apache.poi.xslf.usermodel.XSLFTextShape) {
                                 val noteText = shape.text?.trim()
                                 if (!noteText.isNullOrBlank() && noteText != "Slide ${index + 1}") {
-                                    sb.append("\n[Speaker Notes: $noteText]\n")
+                                    sb.append(noteText)
+                                    sb.append("\n")
                                 }
                             }
                         }
@@ -264,7 +280,7 @@ object DocumentReader {
                 }
 
                 pptx.close()
-                sb.toString()
+                cleanExtractedText(sb.toString())
             }
         } catch (e: Exception) {
             Log.e(TAG, "PPTX read failed: ${e.message}", e)
@@ -280,7 +296,7 @@ object DocumentReader {
             val inputStream = context.contentResolver.openInputStream(uri) ?: return null
             val bitmap = BitmapFactory.decodeStream(inputStream)
             inputStream.close()
-            
+
             if (bitmap == null) {
                 Log.e(TAG, "Failed to decode image bitmap")
                 return null
@@ -288,13 +304,13 @@ object DocumentReader {
 
             val image = InputImage.fromBitmap(bitmap, 0)
             val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-            
+
             val result = recognizer.process(image).await()
             bitmap.recycle()
-            
+
             if (result.text.isNotBlank()) {
                 Log.d(TAG, "OCR extracted: ${result.text.length} chars")
-                result.text
+                cleanExtractedText(result.text)
             } else {
                 Log.w(TAG, "OCR returned no text")
                 null
@@ -314,6 +330,37 @@ object DocumentReader {
         } catch (_: Exception) {
             null
         }
+    }
+
+    // ═══════════════════════════════════════
+    // Text cleaning — makes extracted text LLM-friendly
+    // ═══════════════════════════════════════
+
+    /**
+     * Clean extracted text for LLM consumption.
+     * - Removes page/slide markers that confuse small models
+     * - Collapses excessive blank lines (3+ → 2)
+     * - Removes lines that are ONLY special characters / noise
+     * - Normalizes whitespace within lines
+     * - Trims leading/trailing junk
+     */
+    private fun cleanExtractedText(raw: String): String {
+        return raw
+            // Remove any remaining page/slide/section markers
+            .replace(Regex("""---\s*Page\s*\d+\s*---"""), "")
+            .replace(Regex("""===\s*Slide\s*\d+\s*==="""), "")
+            .replace(Regex("""\[Page\s*\d+]"""), "")
+            // Remove lines that are only dots, dashes, underscores, asterisks (OCR noise)
+            .replace(Regex("""^[\s.\-_*=|#~]+$""", RegexOption.MULTILINE), "")
+            // Collapse runs of 3+ blank lines to just 2 (keeps paragraph separation)
+            .replace(Regex("""\n{3,}"""), "\n\n")
+            // Normalize internal whitespace (tabs, multiple spaces → single space) per line
+            .replace(Regex("""[ \t]{2,}"""), " ")
+            // Trim each line
+            .lines()
+            .joinToString("\n") { it.trim() }
+            // Final trim
+            .trim()
     }
 
     // ═══════════════════════════════════════
