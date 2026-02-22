@@ -285,6 +285,16 @@ class ModelService : ViewModel() {
                     isLLMDownloading = false
                 }
 
+                // ━━ PRE-GENERATION MEMORY PREP (6GB devices) ━━
+                // Aggressively free Java heap before loading model so the native
+                // allocator has maximum contiguous space for model + KV cache + compute buffers.
+                val deviceRAM = appContext?.let { LLMPerformanceBooster.getDeviceRAM(it) } ?: 8192
+                if (deviceRAM <= 6144) {
+                    Log.d(TAG, "Low-RAM device (${deviceRAM}MB): aggressive GC before model load")
+                    LLMPerformanceBooster.forceGC()
+                    delay(200)
+                }
+
                 isLLMLoading = true
                 try {
                     withContext(Dispatchers.IO) {
@@ -312,8 +322,29 @@ class ModelService : ViewModel() {
                 isLLMLoading = false
                 activeLLMModelId = targetId
 
+                // Log context size for debugging
+                val actualCtx = getLoadedContextSize()
+                val nativeAfterLoad = LLMPerformanceBooster.getNativeHeapUsageMB()
+                Log.d(TAG, "LLM loaded: $targetId (context=$actualCtx, nativeHeap=${nativeAfterLoad}MB, deviceRAM=${deviceRAM}MB)")
+
+                // ━━ POST-LOAD SETTLE (6GB devices) ━━
+                // On 6GB devices, give the native memory allocator time to fully
+                // commit and stabilize model + KV cache pages before ANY other
+                // allocations (OCR, TFLite, etc.) touch the native heap.
+                // This prevents fragmentation that causes GGML_ASSERT → SIGABRT
+                // when llama.cpp tries to allocate compute buffers during generation.
+                if (deviceRAM <= 6144) {
+                    Log.d(TAG, "Low-RAM settle: waiting 2s for native pages to stabilize...")
+                    delay(2000)
+                    // DO NOT call forceGC() here! GC returns native heap dirty pages to the OS,
+                    // shrinking the free pool that llama.cpp needs for compute buffer allocation.
+                    val nativeAfterSettle = LLMPerformanceBooster.getNativeHeapUsageMB()
+                    val nativeTotalSettle = android.os.Debug.getNativeHeapSize()/(1024*1024)
+                    val nativeFreeSettle = android.os.Debug.getNativeHeapFreeSize()/(1024*1024)
+                    Log.d(TAG, "Post-settle native heap: ${nativeAfterSettle}MB (total=${nativeTotalSettle}MB, free=${nativeFreeSettle}MB)")
+                }
+
                 refreshModelState()
-                Log.d(TAG, "LLM loaded: $targetId")
             } catch (e: Exception) {
                 errorMessage = "LLM load failed: ${e.message}"
                 isLLMDownloading = false
@@ -400,6 +431,31 @@ class ModelService : ViewModel() {
         }
     }
 
+    /**
+     * Suspend until the STT model is downloaded + loaded.
+     * If already loaded, returns immediately.
+     * Returns true on success, false on failure.
+     */
+    suspend fun ensureSTTReady(): Boolean {
+        if (isSTTLoaded) return true
+
+        // Kick off download/load if not already in progress
+        if (!isSTTDownloading && !isSTTLoading) {
+            downloadAndLoadSTT()
+        }
+
+        // Poll until loaded or error (timeout ~5 min for download)
+        val startTime = System.currentTimeMillis()
+        while (!isSTTLoaded && (System.currentTimeMillis() - startTime) < 300_000L) {
+            if (!isSTTDownloading && !isSTTLoading && !isSTTLoaded) {
+                // Not loading, not loaded → something failed
+                return false
+            }
+            kotlinx.coroutines.delay(200)
+        }
+        return isSTTLoaded
+    }
+
     // ═══════════════════════════════════════
     // TTS
     // ═══════════════════════════════════════
@@ -459,25 +515,14 @@ class ModelService : ViewModel() {
 
     fun downloadAndLoadAllModels() {
         viewModelScope.launch {
-            // Sequential downloads — smallest first for fast feedback.
-            // Parallel downloads split bandwidth 3-way making ALL of them crawl.
-            // TTS (67 MB) → STT (152 MB) → LLM (386 MB)
-
-            if (!isTTSLoaded && !isTTSDownloading && !isTTSLoading) {
-                downloadAndLoadTTS()
-                delay(150) // let coroutine set flags
-                while (isTTSDownloading || isTTSLoading) delay(300)
-            }
-
-            if (!isSTTLoaded && !isSTTDownloading && !isSTTLoading) {
-                downloadAndLoadSTT()
-                delay(150)
-                while (isSTTDownloading || isSTTLoading) delay(300)
-            }
+            // ━━ STT/TTS: Using Android built-in (zero native memory) ━━
+            // SDK Whisper STT (~100MB) and Piper TTS (~40MB) are NO LONGER loaded.
+            // Android's SpeechRecognizer + AccentTTSManager handle voice I/O
+            // as system services → zero impact on app's native heap.
+            // This gives LLM the full RAM headroom it needs on 6GB devices.
 
             if (!isLLMLoaded && !isLLMDownloading && !isLLMLoading) {
                 downloadAndLoadLLM()
-                // LLM is last — no need to wait here, it runs on its own
             }
         }
     }
@@ -506,14 +551,13 @@ class ModelService : ViewModel() {
             withContext(Dispatchers.IO) { RunAnywhere.unloadLLMModel() }
             isLLMLoaded = false
 
-            // Step 2: Aggressive GC — force Java GC to release native references
-            // Multiple rounds ensure finalizers run and native memory is truly freed
-            LLMPerformanceBooster.forceGC()
-            delay(100)
-            LLMPerformanceBooster.forceGC()
-            delay(200)
+            // Step 2: Brief pause — let native allocator mark freed pages as dirty/reusable.
+            // DO NOT call GC here! The dirty pages from unload are exactly what the
+            // reload needs. GC returns them to the OS, forcing kernel re-allocation
+            // which can fail on 6GB devices.
+            delay(300)
 
-            Log.d(TAG, "After unload+GC — native heap: ${android.os.Debug.getNativeHeapAllocatedSize() / (1024*1024)}MB")
+            Log.d(TAG, "After unload — native heap: ${android.os.Debug.getNativeHeapAllocatedSize() / (1024*1024)}MB")
 
             // Step 3: Reload with fresh state — model file is in OS page cache so fast
             withContext(Dispatchers.IO) {
@@ -523,7 +567,9 @@ class ModelService : ViewModel() {
             // Step 4: Settle — let native memory pages stabilize before generation.
             // Without this delay, generation starting immediately after reload can
             // hit a native SIGABRT on 6GB devices due to memory fragmentation.
-            delay(500)
+            // 2000ms needed: on 6GB Xiaomi devices, 500ms was proven insufficient —
+            // SIGABRT occurred 110ms into generation after only 506ms settle time.
+            delay(2000)
 
             isLLMLoaded = true
             val elapsed = System.currentTimeMillis() - startTime
@@ -558,40 +604,38 @@ class ModelService : ViewModel() {
         }
     }
 
-    // reloadWithReducedContext REMOVED — telemetry confirmed it never worked
-    // (context_length stayed at 8192) AND it caused SIGABRT during model switch
-    // by doing 4 native load/unload transitions that corrupted bridge state.
-    // Protection strategy now relies on:
-    //   1. ensureSafeModelForGeneration() auto-switches to SmolLM2-360M on low RAM
-    //   2. getMaxSafePromptLength() caps prompt to fit within context window
-    //   3. freeMemoryForLLM() unloads STT/TTS before generation
-    //   4. Proper delay+GC during model switch in downloadAndLoadLLM()
+    /**
+     * Read the actual context size from the loaded LLM component via native API.
+     * Returns -1 if the context size cannot be determined.
+     */
+    private fun getLoadedContextSize(): Int {
+        return try {
+            val bridgeClass = Class.forName("com.runanywhere.sdk.native.bridge.RunAnywhereBridge")
+            val llmClass = Class.forName("com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM")
+            val handleField = llmClass.getDeclaredField("handle")
+            handleField.isAccessible = true
+            val handle = handleField.getLong(null)
+            if (handle == 0L) return -1
+
+            val getCtxMethod = bridgeClass.getMethod(
+                "racLlmComponentGetContextSize", Long::class.javaPrimitiveType
+            )
+            getCtxMethod.invoke(null, handle) as Int
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to get context size: ${e.message}")
+            -1
+        }
+    }
 
     /**
-     * Unload STT and TTS to free native memory for LLM generation.
-     * Call this before heavy LLM inference when system memory is low.
-     * Models can be reloaded later via downloadAndLoadSTT/TTS.
+     * Free native memory for LLM generation.
+     * With Android built-in STT/TTS, there's nothing to unload — they run
+     * as system services with zero native heap impact.
+     * Kept as no-op for API compatibility.
      */
     suspend fun freeMemoryForLLM() {
-        try {
-            if (isTTSLoaded) {
-                Log.d(TAG, "Unloading TTS to free memory for LLM generation")
-                withContext(Dispatchers.IO) { RunAnywhere.unloadTTSVoice() }
-                isTTSLoaded = false
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "TTS unload failed: ${e.message}")
-        }
-        try {
-            if (isSTTLoaded) {
-                Log.d(TAG, "Unloading STT to free memory for LLM generation")
-                withContext(Dispatchers.IO) { RunAnywhere.unloadSTTModel() }
-                isSTTLoaded = false
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "STT unload failed: ${e.message}")
-        }
-        refreshModelState()
+        Log.d(TAG, "freeMemoryForLLM: No SDK STT/TTS to unload (using Android built-in)")
+        // No-op: Android SpeechRecognizer + AccentTTSManager use zero native heap
     }
 
     /**
@@ -634,7 +678,7 @@ class ModelService : ViewModel() {
             }
 
             delay(500)
-            LLMPerformanceBooster.forceGC()
+            // DO NOT GC here — dirty pages from unload are reused by reload
             delay(300)
 
             try {

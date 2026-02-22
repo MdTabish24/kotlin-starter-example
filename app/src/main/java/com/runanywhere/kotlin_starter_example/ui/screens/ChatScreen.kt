@@ -1,6 +1,9 @@
 package com.runanywhere.kotlin_starter_example.ui.screens
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -45,18 +48,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.runanywhere.kotlin_starter_example.services.ModelService
 import com.runanywhere.kotlin_starter_example.ui.components.ModelLoaderWidget
-import com.runanywhere.kotlin_starter_example.ui.theme.AccentCyan
-import com.runanywhere.kotlin_starter_example.ui.theme.AccentViolet
-import com.runanywhere.kotlin_starter_example.ui.theme.PrimaryDark
-import com.runanywhere.kotlin_starter_example.ui.theme.PrimaryMid
-import com.runanywhere.kotlin_starter_example.ui.theme.SurfaceCard
-import com.runanywhere.kotlin_starter_example.ui.theme.TextMuted
+import com.runanywhere.kotlin_starter_example.R
+import com.runanywhere.kotlin_starter_example.ui.theme.*
 import androidx.compose.ui.platform.LocalContext
-import com.runanywhere.kotlin_starter_example.ui.theme.TextPrimary
+
 import com.runanywhere.kotlin_starter_example.utils.LLMPerformanceBooster
 import com.runanywhere.sdk.public.extensions.chat
 import com.runanywhere.sdk.public.extensions.generate
@@ -83,6 +84,14 @@ fun ChatScreen(
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
 
+    Box(modifier = Modifier.fillMaxSize()) {
+    Image(
+        painter = painterResource(id = R.drawable.app_background),
+        contentDescription = null,
+        modifier = Modifier.fillMaxSize(),
+        contentScale = ContentScale.Crop
+    )
+    Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)))
     Scaffold(
         topBar = {
             TopAppBar(
@@ -93,11 +102,11 @@ fun ChatScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = PrimaryDark
+                    containerColor = GlassWhite
                 )
             )
         },
-        containerColor = PrimaryDark
+        containerColor = Color.Transparent
     ) { padding ->
         Column(
             modifier = modifier
@@ -157,7 +166,7 @@ fun ChatScreen(
             if (modelService.isLLMLoaded) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    color = SurfaceCard.copy(alpha = 0.8f),
+                    color = GlassWhite,
                     shadowElevation = 8.dp
                 ) {
                     Row(
@@ -173,13 +182,15 @@ fun ChatScreen(
                             placeholder = { Text("Type a message...") },
                             readOnly = isGenerating,
                             colors = TextFieldDefaults.colors(
-                                focusedContainerColor = PrimaryMid,
-                                unfocusedContainerColor = PrimaryMid,
-                                disabledContainerColor = PrimaryMid,
+                                focusedContainerColor = Color.White.copy(alpha = 0.10f),
+                                unfocusedContainerColor = Color.White.copy(alpha = 0.06f),
+                                disabledContainerColor = Color.White.copy(alpha = 0.05f),
                                 focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent
+                                unfocusedIndicatorColor = Color.Transparent,
+                                focusedTextColor = TextPrimary,
+                                unfocusedTextColor = TextPrimary
                             ),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(20.dp),
                             maxLines = 4
                         )
 
@@ -258,6 +269,7 @@ fun ChatScreen(
             }
         }
     }
+    } // Close Box
 }
 
 @Composable

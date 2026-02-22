@@ -1,6 +1,10 @@
 package com.runanywhere.kotlin_starter_example
 
+import android.app.ActivityManager
+import android.content.Context
 import android.os.Bundle
+import android.os.Debug
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -25,6 +29,44 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // ── CRASH DIAGNOSTICS: dump full memory state on ANY uncaught exception ──
+        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            try {
+                val nativeHeap = Debug.getNativeHeapAllocatedSize() / (1024 * 1024)
+                val nativeTotal = Debug.getNativeHeapSize() / (1024 * 1024)
+                val nativeFree = Debug.getNativeHeapFreeSize() / (1024 * 1024)
+                val rt = Runtime.getRuntime()
+                val javaUsed = (rt.totalMemory() - rt.freeMemory()) / (1024 * 1024)
+                val javaMax = rt.maxMemory() / (1024 * 1024)
+                val am = getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+                val mi = ActivityManager.MemoryInfo()
+                am?.getMemoryInfo(mi)
+                val systemAvail = mi.availMem / (1024 * 1024)
+                val systemTotal = mi.totalMem / (1024 * 1024)
+
+                Log.e("CRASH-DIAG", "╔══════════════════════════════════════════════════════════")
+                Log.e("CRASH-DIAG", "║ UNCAUGHT EXCEPTION on thread: ${thread.name}")
+                Log.e("CRASH-DIAG", "║ Exception: ${throwable.javaClass.simpleName}: ${throwable.message}")
+                Log.e("CRASH-DIAG", "║ ── MEMORY STATE AT CRASH ──")
+                Log.e("CRASH-DIAG", "║ Native: ${nativeHeap}MB used / ${nativeTotal}MB total / ${nativeFree}MB free")
+                Log.e("CRASH-DIAG", "║ Java:   ${javaUsed}MB used / ${javaMax}MB max")
+                Log.e("CRASH-DIAG", "║ System: ${systemAvail}MB avail / ${systemTotal}MB total")
+                Log.e("CRASH-DIAG", "║ LowMem: ${mi.lowMemory} (threshold=${mi.threshold/(1024*1024)}MB)")
+                Log.e("CRASH-DIAG", "╚══════════════════════════════════════════════════════════")
+
+                // Print full stack trace with CRASH-DIAG tag so our filter catches it
+                val sw = java.io.StringWriter()
+                throwable.printStackTrace(java.io.PrintWriter(sw))
+                sw.toString().lines().forEach { line ->
+                    if (line.isNotBlank()) Log.e("CRASH-DIAG", "║ $line")
+                }
+            } catch (_: Exception) {
+                // Can't risk throwing during crash handler
+            }
+            defaultHandler?.uncaughtException(thread, throwable)
+        }
 
         // Initialize Android platform context FIRST - this sets up storage paths
         // The SDK requires this before RunAnywhere.initialize() on Android

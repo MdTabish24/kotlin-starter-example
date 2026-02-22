@@ -89,6 +89,10 @@ class AccentTTSManager(context: Context) {
                 override fun onDone(utteranceId: String?) {
                     if (continuation.isActive) continuation.resume(Unit)
                 }
+                override fun onStop(utteranceId: String?, interrupted: Boolean) {
+                    // Resume when TTS is stopped externally (e.g. stopVoiceSession)
+                    if (continuation.isActive) continuation.resume(Unit)
+                }
                 @Deprecated("Deprecated in API")
                 override fun onError(utteranceId: String?) {
                     if (continuation.isActive) continuation.resume(Unit)
@@ -108,7 +112,7 @@ class AccentTTSManager(context: Context) {
         }
     }
 
-    /** Fire-and-forget speak (no waiting for completion). */
+    /** Fire-and-forget speak (no waiting for completion). Clears any queued speech. */
     fun speakAsync(text: String, accentId: String, speed: Float = 1.0f, pitch: Float = 1.0f) {
         if (!isReady || text.isBlank()) return
         val accent = getAccent(accentId)
@@ -116,6 +120,23 @@ class AccentTTSManager(context: Context) {
         tts?.setSpeechRate(speed.coerceIn(0.5f, 2.0f))
         tts?.setPitch(pitch.coerceIn(0.5f, 2.0f))
         tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "youlearn_${System.currentTimeMillis()}")
+    }
+
+    /** Speak text queued after current speech (doesn't interrupt ongoing speech). */
+    fun speakQueued(text: String, accentId: String, speed: Float = 1.0f, pitch: Float = 1.0f) {
+        if (!isReady || text.isBlank()) return
+        val accent = getAccent(accentId)
+        tts?.language = accent.locale
+        tts?.setSpeechRate(speed.coerceIn(0.5f, 2.0f))
+        tts?.setPitch(pitch.coerceIn(0.5f, 2.0f))
+        tts?.speak(text, TextToSpeech.QUEUE_ADD, null, "youlearn_q_${System.currentTimeMillis()}")
+    }
+
+    /** Suspend until all queued TTS speech finishes. */
+    suspend fun waitUntilDone() {
+        while (tts?.isSpeaking == true) {
+            kotlinx.coroutines.delay(100)
+        }
     }
 
     fun stop() {

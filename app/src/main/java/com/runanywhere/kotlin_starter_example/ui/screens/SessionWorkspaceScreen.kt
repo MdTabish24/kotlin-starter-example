@@ -6,7 +6,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,6 +34,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -45,7 +51,15 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import android.webkit.WebSettings
 import androidx.core.content.ContextCompat
 import java.util.concurrent.CancellationException
 import com.runanywhere.kotlin_starter_example.data.*
@@ -56,14 +70,18 @@ import com.runanywhere.kotlin_starter_example.utils.DocumentReader
 import com.runanywhere.kotlin_starter_example.utils.LLMPerformanceBooster
 import com.runanywhere.kotlin_starter_example.utils.SmartDocumentSearch
 import com.runanywhere.kotlin_starter_example.utils.AccentTTSManager
-import com.runanywhere.kotlin_starter_example.utils.SimpleAudioRecorder
-import com.runanywhere.kotlin_starter_example.utils.playWavAudioData
-import com.runanywhere.sdk.public.RunAnywhere
-import com.runanywhere.sdk.public.extensions.transcribe
-import com.runanywhere.sdk.public.extensions.synthesize
-import com.runanywhere.sdk.public.extensions.TTS.TTSOptions
+import com.runanywhere.kotlin_starter_example.utils.AndroidSTTManager
+import com.runanywhere.kotlin_starter_example.utils.AudioFileTranscriber
+import com.runanywhere.kotlin_starter_example.utils.PdfExportManager
+import com.runanywhere.kotlin_starter_example.utils.PdfQAEntry
+import com.runanywhere.kotlin_starter_example.R
+import android.provider.OpenableColumns
+import android.widget.Toast
 import com.runanywhere.sdk.foundation.bridge.extensions.CppBridgeLLM
+import com.runanywhere.sdk.public.RunAnywhere
+import com.runanywhere.sdk.public.extensions.unloadSTTModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -119,13 +137,14 @@ fun SessionWorkspaceScreen(
     // Voice session state - Nova-style VAD pipeline
     var voiceState by remember { mutableStateOf(VoiceSessionState.IDLE) }
     var isSpeaking by remember { mutableStateOf(false) }
-    val audioRecorder = remember { SimpleAudioRecorder() }
+    val androidSTT = remember { AndroidSTTManager(context) }
     var liveAmplitude by remember { mutableStateOf(0f) }
     var liveTranscript by remember { mutableStateOf("") }
+    var voiceResponseText by remember { mutableStateOf("") }
 
     // Android built-in TTS — supports Indian 🇮🇳, US 🇺🇸, UK 🇬🇧, AU 🇦🇺 accents (zero download)
     val accentTTS = remember { AccentTTSManager(context) }
-    DisposableEffect(Unit) { onDispose { accentTTS.shutdown() } }
+    DisposableEffect(Unit) { onDispose { accentTTS.shutdown(); androidSTT.shutdown() } }
 
     // UI state - only 2 tabs now (Chat, Notes) - Document tab removed
     var selectedTab by remember { mutableIntStateOf(0) }
@@ -135,7 +154,8 @@ fun SessionWorkspaceScreen(
     var isExplaining by remember { mutableStateOf(false) }
     var saveIndicator by remember { mutableStateOf("") }
 
-    // KV cache token tracker — now cleared on EVERY prompt for zero crash risk
+    // KV cache token tracker — reset only when approaching context limit
+    // Qwen2.5: reset at 5000 tokens (context=8192). SmolLM2-360M: reset at 1200 (context=2048)
     var cumulativeTokens by remember { mutableIntStateOf(0) }
 
     // Document info for dropdown (not shown in chat)
@@ -147,6 +167,23 @@ fun SessionWorkspaceScreen(
     // Key Points state — for "Generate Key Points" long press option
     val keyPointsMap = remember { mutableStateMapOf<Long, String>() }
     var generatingKeyPointsFor by remember { mutableStateOf<Long?>(null) }
+
+    // Diagram state — for "Generate Diagram/Visual" long press option
+    val diagramMermaidMap = remember { mutableStateMapOf<Long, String>() }
+    val diagramBitmapMap = remember { mutableStateMapOf<Long, ByteArray>() }  // cached Mermaid bitmaps
+    var generatingDiagramFor by remember { mutableStateOf<Long?>(null) }
+    var showDiagramTimestamp by remember { mutableStateOf<Long?>(null) }
+
+    // PDF Document entries — accumulated Q&A pairs for export
+    val pdfEntries = remember { mutableStateListOf<PdfQAEntry>() }
+    var isGeneratingPdf by remember { mutableStateOf(false) }
+
+    // Audio transcription state
+    var isTranscribingAudio by remember { mutableStateOf(false) }
+    var audioTranscriptionProgress by remember { mutableFloatStateOf(0f) }
+
+    // Voice conversation job (for cancellation)
+    var voiceJob by remember { mutableStateOf<Job?>(null) }
 
     // (Document card removed — clean chat-only interface)
 
@@ -167,62 +204,150 @@ fun SessionWorkspaceScreen(
     val filePickerLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri ->
-        uri?.let {
+        uri?.let { fileUri ->
             scope.launch {
-                // Show loading message
-                val loadingMsg = SessionMessage("📄 Importing & indexing document...", isUser = false)
-                messages = messages + loadingMsg
+                // ── Detect audio files ──
+                val mimeType = context.contentResolver.getType(fileUri)
+                val isAudioFile = mimeType?.startsWith("audio/") == true
 
-                val result = withContext(Dispatchers.IO) {
-                    DocumentReader.readDocument(context, it)
-                }
+                if (isAudioFile) {
+                    // ━━ AUDIO FILE → WHISPER STT → TEXT ━━
+                    // Decode audio file to PCM, transcribe silently using on-device
+                    // Whisper model, then save transcribed text and index it like a document.
+                    isTranscribingAudio = true
+                    audioTranscriptionProgress = 0f
 
-                // CRITICAL: Force aggressive GC to reclaim PDF native memory
-                // BEFORE any LLM operations to prevent fragmentation
-                System.gc()
-                System.runFinalization()
-                kotlinx.coroutines.delay(200)
-                System.gc()
-                kotlinx.coroutines.delay(100)
+                    try {
+                        // Get filename from content resolver
+                        val audioName = context.contentResolver.query(
+                            fileUri,
+                            arrayOf(OpenableColumns.DISPLAY_NAME),
+                            null, null, null
+                        )?.use { cursor ->
+                            if (cursor.moveToFirst()) cursor.getString(0) else null
+                        } ?: "Audio Recording.mp3"
 
-                // Remove loading message
-                messages = messages.filter { msg -> msg !== loadingMsg }
+                        // ── Ensure Whisper STT model is downloaded & loaded ──
+                        audioTranscriptionProgress = 0.05f
+                        val sttReady = modelService.ensureSTTReady()
+                        if (!sttReady) {
+                            messages = messages + SessionMessage(
+                                "Whisper speech model not available.\nGo to Settings → Download Speech Model first.",
+                                isUser = false
+                            )
+                            return@launch
+                        }
 
-                if (result != null) {
-                    val (name, content) = result
-                    documentName = name
-                    hasDocument = true
+                        val transcriber = AudioFileTranscriber(context)
+                        val transcribedText = transcriber.transcribe(fileUri) { prog, _ ->
+                            audioTranscriptionProgress = prog
+                        }
 
-                    // 💾 Save document to FILE (not memory!) and index it
-                    SmartDocumentSearch.saveDocumentToFile(content, context, session.id)
-                    val numChunks = SmartDocumentSearch.indexDocument(content, context)
-                    // content string will be garbage collected — NOT stored in state!
+                        if (transcribedText.isNotBlank() &&
+                            !transcribedText.startsWith("⚠️") &&
+                            transcribedText.length > 10
+                        ) {
+                            // ── Save & index like a document ──
+                            documentName = audioName
+                            hasDocument = true
 
-                    // Store doc info for dropdown (not shown in chat)
-                    val ext = name.substringAfterLast('.', "").uppercase()
-                    docInfoFormat = ext
-                    docInfoChars = content.length
-                    docInfoChunks = numChunks
+                            SmartDocumentSearch.saveDocumentToFile(
+                                transcribedText, context, session.id
+                            )
+                            val numChunks = SmartDocumentSearch.indexDocument(
+                                transcribedText, context
+                            )
 
-                    session = session.copy(
-                        title = name.substringBeforeLast('.'),
-                        documentName = name,
-                        documentContent = null,  // NOT stored in memory
-                        hasDocument = true
-                    )
+                            val ext = audioName.substringAfterLast('.', "").uppercase()
+                            docInfoFormat = "$ext (Audio)"
+                            docInfoChars = transcribedText.length
+                            docInfoChunks = numChunks
 
-                    // Simple confirmation — no technical details in chat
-                    val successMsg = SessionMessage(
-                        "✅ \"$name\" loaded. Ask me anything about this document!",
-                        isUser = false
-                    )
-                    messages = messages + successMsg
+                            session = session.copy(
+                                title = audioName.substringBeforeLast('.'),
+                                documentName = audioName,
+                                documentContent = null,
+                                hasDocument = true
+                            )
+
+                            messages = messages + SessionMessage(
+                                "\"$audioName\" transcribed & imported!\n" +
+                                "${transcribedText.length} characters extracted.\n" +
+                                "Ask me anything about this audio!",
+                                isUser = false
+                            )
+                        } else {
+                            // STT returned empty or warning
+                            val errorText = if (transcribedText.startsWith("⚠️")) transcribedText
+                                else "Could not transcribe audio. The file may be empty or in an unsupported format."
+                            messages = messages + SessionMessage(errorText, isUser = false)
+                        }
+                    } catch (e: Exception) {
+                        messages = messages + SessionMessage(
+                            "Audio transcription failed: ${e.message}",
+                            isUser = false
+                        )
+                    } finally {
+                        isTranscribingAudio = false
+                        // Unload Whisper STT to free ~75MB native memory
+                        try {
+                            RunAnywhere.unloadSTTModel()
+                        } catch (_: Exception) {}
+                        System.gc()
+                    }
+
                 } else {
-                    val errorMsg = SessionMessage(
-                        "❌ Could not extract text from the file. Make sure it's a supported format (PDF, DOCX, PPTX, PNG, JPG, TXT).",
-                        isUser = false
-                    )
-                    messages = messages + errorMsg
+                    // ━━ DOCUMENT FILE (existing flow) ━━
+                    val loadingMsg = SessionMessage("Importing & indexing document...", isUser = false)
+                    messages = messages + loadingMsg
+
+                    val result = withContext(Dispatchers.IO) {
+                        DocumentReader.readDocument(context, fileUri)
+                    }
+
+                    // DocumentReader.readDocument already closes TextRecognizer and frees native memory.
+                    // DO NOT GC here — it would shrink the native heap's dirty page pool that
+                    // llama.cpp needs for compute buffer allocation during generation.
+
+                    // Remove loading message
+                    messages = messages.filter { msg -> msg !== loadingMsg }
+
+                    if (result != null) {
+                        val (name, content) = result
+                        documentName = name
+                        hasDocument = true
+
+                        // 💾 Save document to FILE (not memory!) and index it
+                        SmartDocumentSearch.saveDocumentToFile(content, context, session.id)
+                        val numChunks = SmartDocumentSearch.indexDocument(content, context)
+                        // content string will be garbage collected — NOT stored in state!
+
+                        // Store doc info for dropdown (not shown in chat)
+                        val ext = name.substringAfterLast('.', "").uppercase()
+                        docInfoFormat = ext
+                        docInfoChars = content.length
+                        docInfoChunks = numChunks
+
+                        session = session.copy(
+                            title = name.substringBeforeLast('.'),
+                            documentName = name,
+                            documentContent = null,  // NOT stored in memory
+                            hasDocument = true
+                        )
+
+                        // Simple confirmation — no technical details in chat
+                        val successMsg = SessionMessage(
+                            "\"$name\" loaded. Ask me anything about this document!",
+                            isUser = false
+                        )
+                        messages = messages + successMsg
+                    } else {
+                        val errorMsg = SessionMessage(
+                            "Could not extract text from the file. Make sure it's a supported format (PDF, DOCX, PPTX, PNG, JPG, TXT).",
+                            isUser = false
+                        )
+                        messages = messages + errorMsg
+                    }
                 }
             }
         }
@@ -315,6 +440,19 @@ fun SessionWorkspaceScreen(
         )
 
         android.util.Log.d("BridgeGen", "⚡ Direct bridge generate: maxTok=$adaptiveMaxTokens, temp=$temp, topK=20, topP=0.85, repeatPen=1.15")
+        // ── Critical pre-generation memory snapshot (for SIGABRT diagnosis) ──
+        val preGenNativeHeap = android.os.Debug.getNativeHeapAllocatedSize() / (1024 * 1024)
+        val preGenNativeFree = android.os.Debug.getNativeHeapFreeSize() / (1024 * 1024)
+        val preGenNativeTotal = android.os.Debug.getNativeHeapSize() / (1024 * 1024)
+        val am = context.getSystemService(android.content.Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+        val mi = android.app.ActivityManager.MemoryInfo()
+        am.getMemoryInfo(mi)
+        val sysAvail = mi.availMem / (1024 * 1024)
+        android.util.Log.d("BridgeGen", "╔═ PRE-GENERATE MEMORY ═══════════════════╗")
+        android.util.Log.d("BridgeGen", "║ Native: ${preGenNativeHeap}MB used / ${preGenNativeTotal}MB total / ${preGenNativeFree}MB FREE")
+        android.util.Log.d("BridgeGen", "║ System: ${sysAvail}MB available | LowMem=${mi.lowMemory}")
+        android.util.Log.d("BridgeGen", "║ Prompt: ${prompt.length} chars | maxTokens=$adaptiveMaxTokens")
+        android.util.Log.d("BridgeGen", "╚═════════════════════════════════════════╝")
 
         val startTime = System.currentTimeMillis()
         val sb = StringBuilder()
@@ -355,47 +493,52 @@ fun SessionWorkspaceScreen(
 
     // ── Helper: Free memory before heavy LLM tasks ──
     suspend fun boostForLLM() {
-        LLMPerformanceBooster.boostForInference()
-
-        // Log native heap usage (per-process) — this is the REAL constraint.
-        // System-wide available RAM can look fine (e.g. 1632MB) while the process's
-        // native heap is exhausted. The SIGABRT crash happens because:
-        //   LLM model (~1GB) + KV cache (~224MB) + STT (~75MB) + TTS (~63MB)
-        //   + inference scratch buffers (~200-400MB) > process native heap limit.
-        // "Waiting for blocking GC NativeAlloc" in the logs confirms this.
         val nativeHeapMB = LLMPerformanceBooster.getNativeHeapUsageMB()
         val deviceRAM = LLMPerformanceBooster.getDeviceRAM(context)
-        android.util.Log.d("LLMBoost", "Device RAM: ${deviceRAM}MB, Native heap: ${nativeHeapMB}MB")
+        val systemAvailMB = LLMPerformanceBooster.getSystemAvailableMemoryMB(context)
+        val nativeFreeMB = android.os.Debug.getNativeHeapFreeSize() / (1024 * 1024)
+        android.util.Log.d("LLMBoost", "PRE-GEN STATE: deviceRAM=${deviceRAM}MB, nativeHeap=${nativeHeapMB}MB, " +
+            "nativeFree=${nativeFreeMB}MB, systemAvail=${systemAvailMB}MB, cumulativeTokens=$cumulativeTokens")
 
-        // On devices with ≤8GB RAM, ALWAYS unload STT/TTS before LLM generation.
-        // The per-process native memory can't handle all 3 models + inference buffers.
-        // STT/TTS will be reloaded after generation completes.
-        if (deviceRAM <= 8192 && (modelService.isSTTLoaded || modelService.isTTSLoaded)) {
-            android.util.Log.d("LLMBoost", "Unloading STT/TTS to free ~140MB native memory for LLM inference")
-            modelService.freeMemoryForLLM()
-            // Brief delay for OS to reclaim freed native memory pages.
-            kotlinx.coroutines.delay(200)
-            LLMPerformanceBooster.forceGC()
-            kotlinx.coroutines.delay(100)
-            android.util.Log.d("LLMBoost", "After unload — native heap: ${LLMPerformanceBooster.getNativeHeapUsageMB()}MB")
-        }
+        // ━━ DO NOT GC BEFORE GENERATION ━━
+        // CRITICAL: Native heap "dirty pages" (freed but reusable memory from OCR etc.)
+        // are what llama.cpp NEEDS to allocate its compute graph buffer (~30-50MB).
+        // Aggressive GC + trimMemory returns these pages to the OS kernel,
+        // shrinking nativeFree from ~47MB to ~3MB → llama.cpp can't allocate → SIGABRT.
+        // Java heap is tiny (~16MB) and irrelevant. Leave native heap alone.
+        val isLowRAM = deviceRAM <= 6144
 
-        // SAFETY NET: Only switches to SmolLM2-360M if native heap exceeds 75% of
-        // device RAM — a real danger zone. Now that docs are on disk, the user's chosen
-        // model (even 1.7B at ~1700MB) is safe on 6GB devices.
+        // ━━ STT/TTS: Using Android built-in — zero native heap ━━
+        // No SDK models to unload. SpeechRecognizer + AccentTTSManager are system services.
+
+        // SAFETY NET: switch to SmolLM2-360M if native heap > 75% of device RAM.
         val didSwitchModel = modelService.ensureSafeModelForGeneration(context)
 
-        // ━━ ALWAYS reset KV cache before EVERY prompt ━━
-        // llama.cpp accumulates KV cache across generate() calls.
-        // SmolLM2-360M has only 2048 context tokens — one doc-augmented prompt
-        // can fill ~1200 tokens, so the 2nd prompt OVERFLOWS → SIGABRT.
-        // Resetting ensures each query gets a fresh, full context window.
-        // Skip if ensureSafeModelForGeneration just loaded a fresh model (KV already clean).
-        if (!didSwitchModel) {
-            android.util.Log.d("LLMBoost", "Resetting KV cache for clean context")
+        // ━━ CONDITIONAL KV cache reset ━━
+        // Only reset when KV cache is filling up. Full reset (unload→reload)
+        // is expensive and can cause memory pressure on 6GB devices.
+        //
+        // Context sizes (SDK defaults, cannot be configured at runtime):
+        //   Qwen2.5-1.5B: context=4096 → KV cache ~112MB
+        //   SmolLM2-360M: context=2048 → KV cache ~28MB
+        //
+        // Thresholds: reset before KV cache fills to ~75% capacity.
+        //   Low-RAM (≤6GB) or tiny model: reset at 1200 tokens (~30% of 4096)
+        //   Higher-RAM: reset at 2800 tokens (~68% of 4096)
+        // First message: cumulativeTokens=0 → NO reset, KV cache is clean.
+        val modelMem = (ModelService.getLLMOption(modelService.activeLLMModelId)?.memoryRequirement ?: 400_000_000L) / (1024L * 1024L)
+        val isTinyModel = modelMem < 500
+        val kvResetThreshold = if (isTinyModel || isLowRAM) 1200 else 2800
+
+        if (!didSwitchModel && cumulativeTokens > kvResetThreshold) {
+            android.util.Log.d("LLMBoost", "KV cache needs reset: $cumulativeTokens tokens > $kvResetThreshold threshold")
             modelService.resetLLMContext()
+            cumulativeTokens = 0
+        } else if (didSwitchModel) {
+            cumulativeTokens = 0  // Fresh model loaded — KV cache is already clean
+        } else {
+            android.util.Log.d("LLMBoost", "KV cache OK: $cumulativeTokens tokens < $kvResetThreshold threshold, skipping reset")
         }
-        cumulativeTokens = 0
     }
 
     fun hasEnoughMemoryForLLM(): Boolean {
@@ -522,8 +665,13 @@ fun SessionWorkspaceScreen(
 
                 if (fullResponse.isBlank()) fullResponse = "I couldn't generate a response. The model may need more memory \u2014 try a smaller model in Settings."
 
-                // Note: KV cache is now cleared before EVERY prompt in boostForLLM()
-                // No need to track cumulative tokens - each query is independent
+                // Track cumulative tokens for KV cache management.
+                // KV cache fills with input + output tokens across calls.
+                // Rough estimate: 1 token ≈ 4 chars.
+                val estimatedInputTokens = safePrompt.length / 4
+                val estimatedOutputTokens = fullResponse.length / 4
+                cumulativeTokens += estimatedInputTokens + estimatedOutputTokens
+                android.util.Log.d("KVTrack", "Tokens this turn: ~${estimatedInputTokens + estimatedOutputTokens}, cumulative: $cumulativeTokens")
 
                 val aiMsg = SessionMessage(fullResponse.trim(), isUser = false)
                 messages = messages + aiMsg
@@ -560,7 +708,20 @@ fun SessionWorkspaceScreen(
 
         scope.launch {
             try {
-                boostForLLM()
+                // ━━ MUST reset KV cache before key points ━━
+                // The previous answer generation filled the KV cache with 500+ tokens.
+                // Key points needs its own fresh context window. Without reset,
+                // the KV cache overflows → SIGABRT in librac_backend_llamacpp.so.
+                android.util.Log.d("KeyPoints", "Resetting KV cache before key points (cumTokens=$cumulativeTokens)")
+                modelService.resetLLMContext()
+                cumulativeTokens = 0
+                LLMPerformanceBooster.boostForInference()
+
+                // Safety: if model got unloaded somehow, abort gracefully
+                if (!modelService.isLLMLoaded) {
+                    keyPointsMap[message.timestamp] = "⚠️ Model not ready. Try again."
+                    return@launch
+                }
 
                 val prompt = buildString {
                     append("Summarize the following into concise, numbered key points.\n")
@@ -569,7 +730,7 @@ fun SessionWorkspaceScreen(
                     append("Key Points:\n1.")
                 }
 
-                val result = generateWithBridge(prompt, maxTok = 300, temp = 0.5f) { currentText ->
+                val result = generateWithBridge(prompt, maxTok = 512, temp = 0.5f) { currentText ->
                     keyPointsMap[message.timestamp] = "1.$currentText"
                 }
 
@@ -590,23 +751,150 @@ fun SessionWorkspaceScreen(
         }
     }
 
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // SMART DIAGRAM — built from content, NO LLM call needed
+    // Instant, always meaningful, zero syntax errors
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    fun buildSmartDiagram(content: String, keyPointsText: String?): String {
+        val emojis = listOf("", "", "", "", "", "", "", "", "", "", "", "", "", "")
+        val nodeIds = ('A'..'Z').map { it.toString() }
+        val stopWords = setOf(
+            "the", "a", "an", "is", "are", "was", "were", "be", "been", "being",
+            "to", "for", "of", "in", "on", "at", "by", "with", "from", "and", "or",
+            "not", "no", "can", "will", "would", "could", "should", "may", "might",
+            "do", "does", "did", "has", "have", "had", "it", "its", "this", "that",
+            "these", "those", "they", "them", "their", "also", "as", "which", "who",
+            "whom", "where", "when", "how", "what", "than", "then", "each", "every",
+            "all", "both", "few", "more", "most", "other", "some", "such", "into",
+            "over", "after", "before", "between", "through", "during", "about",
+            "using", "used", "based", "allows", "allowing", "use", "uses",
+            "involves", "involve", "include", "includes", "including", "called",
+            "whether", "new", "well", "like", "one", "two", "three", "make",
+            "makes", "made", "making", "help", "helps", "helping", "provide",
+            "provides", "providing", "instance", "instances", "process", "only",
+            "example", "examples", "type", "set", "way", "case", "refer", "refers",
+            "particular", "specific", "given", "known", "without", "within",
+            "learn", "learning", "learned", "while", "there", "here", "any",
+            "such", "much", "very", "just", "still", "already", "often", "even"
+        )
+
+        // Helper: extract meaningful words from text
+        fun meaningful(text: String, count: Int = 3): String {
+            return text.split(Regex("\\s+"))
+                .map { it.replace(Regex("[^\\w]"), "").trim() }
+                .filter { it.length >= 3 && it.lowercase() !in stopWords }
+                .take(count)
+                .joinToString(" ") { w -> w.replaceFirstChar { c -> c.uppercase() } }
+        }
+
+        // ── Step 1: Extract main topic from first sentence ──
+        val firstLine = content.split(Regex("[.!?\\n]"))
+            .firstOrNull { it.trim().length > 5 }?.trim() ?: ""
+        val mainTopic = meaningful(firstLine, 3)
+            .ifBlank { "Topic Overview" }
+            .take(25)
+
+        // ── Step 2: Extract key concepts from key points or content ──
+        val concepts = mutableListOf<String>()
+        val textToParse = if (!keyPointsText.isNullOrBlank()) keyPointsText else content
+
+        // Split into segments: numbered points or sentences
+        val segments = if (textToParse.contains(Regex("\\d+\\.\\s"))) {
+            textToParse.split(Regex("(?=\\d+\\.?\\d*\\.\\s)"))
+                .map { it.replace(Regex("^\\d+\\.?\\d*\\.\\s*"), "").trim() }
+                .filter { it.length > 10 }
+        } else {
+            textToParse.split(Regex("[.!?\\n]"))
+                .map { it.trim() }
+                .filter { it.length > 15 }
+        }
+
+        for (segment in segments.take(10)) {
+            val label = meaningful(segment, 3)
+            if (label.length >= 4 && label.lowercase() != mainTopic.lowercase()) {
+                concepts.add(label.take(25))
+            }
+        }
+
+        val uniqueConcepts = concepts.distinct().take(7)
+
+        if (uniqueConcepts.isEmpty()) {
+            return "graph TD\n    A[$mainTopic] --> B[Key Concepts]"
+        }
+
+        // ── Step 3: Build hierarchical Mermaid diagram ──
+        val sb = StringBuilder("graph TD\n")
+        var nodeIdx = 1 // A (index 0) is main topic
+
+        if (uniqueConcepts.size <= 3) {
+            // Simple star: main → each concept
+            for (i in uniqueConcepts.indices) {
+                val nid = nodeIds[nodeIdx]
+                val emoji = emojis.getOrElse(nodeIdx) { "" }
+                sb.appendLine("    A[$mainTopic] --> $nid[$emoji${uniqueConcepts[i]}]")
+                nodeIdx++
+            }
+        } else {
+            // Grouped hierarchy for 4+ concepts — creates 2-3 level tree
+            // Every 3 concepts: first is parent, next 1-2 are children
+            var i = 0
+            while (i < uniqueConcepts.size) {
+                val parentNid = nodeIds[nodeIdx]
+                val parentEmoji = emojis.getOrElse(nodeIdx) { "" }
+                sb.appendLine("    A[$mainTopic] --> $parentNid[$parentEmoji${uniqueConcepts[i]}]")
+                nodeIdx++
+
+                // Attach next 1-2 concepts as children of this parent
+                val remainAfterThis = uniqueConcepts.size - i - 1
+                val childCount = if (remainAfterThis > 2) 2 else minOf(remainAfterThis, 2)
+                for (c in 1..childCount) {
+                    if (i + c < uniqueConcepts.size) {
+                        val childNid = nodeIds[nodeIdx]
+                        val childEmoji = emojis.getOrElse(nodeIdx) { "" }
+                        sb.appendLine("    $parentNid --> $childNid[$childEmoji${uniqueConcepts[i + c]}]")
+                        nodeIdx++
+                    }
+                }
+                i += 1 + childCount
+            }
+        }
+
+        return sb.toString().trimEnd()
+    }
+
+    fun generateDiagram(message: SessionMessage) {
+        if (generatingDiagramFor != null) return
+        generatingDiagramFor = message.timestamp
+
+        // ━━ NO LLM CALL — build diagram instantly from existing content ━━
+        scope.launch {
+            try {
+                val content = message.text
+                val keyPoints = keyPointsMap[message.timestamp]
+
+                val mermaidCode = buildSmartDiagram(content, keyPoints)
+                diagramMermaidMap[message.timestamp] = mermaidCode
+                showDiagramTimestamp = message.timestamp
+
+                android.util.Log.d("Diagram", "✅ Smart diagram (instant):\n$mermaidCode")
+            } catch (e: Exception) {
+                android.util.Log.e("Diagram", "❌ Diagram error: ${e.message}", e)
+                diagramMermaidMap[message.timestamp] = "graph TD\n    A[Topic] --> B[Details]"
+                showDiagramTimestamp = message.timestamp
+            } finally {
+                generatingDiagramFor = null
+            }
+        }
+    }
+
     fun speakText(text: String) {
         if (isSpeaking) return
         isSpeaking = true
         scope.launch {
             try {
-                if (prefs.useNativeTTS && accentTTS.isReady) {
-                    // 🇮🇳 Android TTS — supports Indian & other accents, no download
+                if (accentTTS.isReady) {
+                    // 🇮🇳 Android TTS — supports Indian & other accents, no download, zero native heap
                     accentTTS.speakAndWait(text.take(1000), prefs.ttsAccent, prefs.ttsSpeed, prefs.ttsPitch)
-                } else if (modelService.isTTSLoaded) {
-                    // Fallback to Piper TTS
-                    val output = withContext(Dispatchers.IO) {
-                        RunAnywhere.synthesize(text.take(500), TTSOptions(
-                            rate = prefs.ttsSpeed,
-                            pitch = prefs.ttsPitch
-                        ))
-                    }
-                    playWavAudioData(output.audioData)
                 }
             } catch (_: Exception) {
             } finally {
@@ -615,10 +903,8 @@ fun SessionWorkspaceScreen(
         }
     }
 
-    // Forward-ref workaround: stopVoiceAndProcess is defined after startVoiceSession
-    var doStopVoiceAndProcess: () -> Unit = {}
-
-    // ── Nova-style Voice Pipeline: Speak → VAD silence detect → auto-respond ──
+    // ── Nova-style Voice Pipeline: Android STT → LLM → AccentTTS ──
+    // No SDK models needed — SpeechRecognizer handles recording + VAD + transcription
     fun startVoiceSession() {
         if (!hasAudioPermission) {
             permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
@@ -627,259 +913,217 @@ fun SessionWorkspaceScreen(
         if (voiceState != VoiceSessionState.IDLE) return
         if (!modelService.isLLMLoaded) return
 
-        // On-demand STT reload: STT may have been unloaded during text query
-        if (!modelService.isSTTLoaded) {
-            scope.launch {
-                modelService.downloadAndLoadSTT()
-                // Wait for STT to load, then start recording
-                var waited = 0
-                while (!modelService.isSTTLoaded && waited < 8000) {
-                    kotlinx.coroutines.delay(200)
-                    waited += 200
-                }
-                if (modelService.isSTTLoaded) startVoiceSession()
-            }
+        if (!androidSTT.isAvailable) {
+            messages = messages + SessionMessage("Speech recognition not available on this device. Install Google app.", isUser = false)
             return
         }
 
         voiceState = VoiceSessionState.LISTENING
         liveTranscript = ""
-
-        // VAD callback: auto-stop when user pauses speaking
-        audioRecorder.onSilenceDetected = {
-            scope.launch(Dispatchers.Main) {
-                if (voiceState == VoiceSessionState.LISTENING) {
-                    doStopVoiceAndProcess()
-                }
-            }
-        }
-
-        scope.launch {
-            try {
-                // Start recording with VAD — auto-stops after 1.5s silence
-                val started = withContext(Dispatchers.IO) { audioRecorder.startRecording(enableVAD = true) }
-                if (!started) {
-                    voiceState = VoiceSessionState.IDLE
-                    audioRecorder.onSilenceDetected = null
-                    return@launch
-                }
-                // Poll amplitude for live UI visualization (20 fps)
-                while (voiceState == VoiceSessionState.LISTENING) {
-                    liveAmplitude = audioRecorder.currentAmplitude
-                    delay(50)
-                }
-                liveAmplitude = 0f
-            } catch (e: Exception) {
-                voiceState = VoiceSessionState.IDLE
-                audioRecorder.onSilenceDetected = null
-                liveAmplitude = 0f
-            }
-        }
-    }
-
-    fun stopVoiceAndProcess() {
-        if (voiceState != VoiceSessionState.LISTENING) return
-        audioRecorder.onSilenceDetected = null  // prevent double-trigger
         liveAmplitude = 0f
 
-        scope.launch {
+        voiceJob = scope.launch {
             try {
-                // Step 2: Stop recording & transcribe
-                voiceState = VoiceSessionState.TRANSCRIBING
+                // ━━ Continuous conversation loop ━━
+                // LISTEN → THINK → SPEAK → LISTEN → ... until user taps circle
+                while (voiceState != VoiceSessionState.IDLE) {
+                    voiceState = VoiceSessionState.LISTENING
+                    liveTranscript = ""
+                    liveAmplitude = 0f
+                    voiceResponseText = ""
 
-                val audioData = withContext(Dispatchers.IO) { audioRecorder.stopRecording() }
-
-                if (audioData.isEmpty() || !modelService.isSTTLoaded) {
-                    voiceState = VoiceSessionState.IDLE
-                    return@launch
-                }
-
-                val transcribedText = withContext(Dispatchers.IO) {
-                    RunAnywhere.transcribe(audioData)
-                }
-
-                if (transcribedText.isBlank()) {
-                    voiceState = VoiceSessionState.IDLE
-                    return@launch
-                }
-
-                liveTranscript = transcribedText  // show what user said in status bar
-
-                // Add user message
-                val userMsg = SessionMessage(transcribedText, isUser = true)
-                messages = messages + userMsg
-                try { listState.animateScrollToItem(maxOf(0, messages.size - 1)) } catch (_: Exception) {}
-
-                // Step 3: Generate LLM response
-                voiceState = VoiceSessionState.THINKING
-                isGenerating = true
-                streamingResponse = ""
-
-                val voiceModelMem = (ModelService.getLLMOption(modelService.activeLLMModelId)?.memoryRequirement ?: 400_000_000L) / (1024L * 1024L)
-                val voiceDocLimit = LLMPerformanceBooster.getRecommendedDocLimit(context, voiceModelMem)
-                val contextPrompt = buildString {
-                    if (hasDocument && SmartDocumentSearch.isDocumentIndexed()) {
-                        // Same smart RAG prompt as text chat
-                        val queryLower = transcribedText.lowercase().trim()
-                        val isOverviewQuestion = queryLower.let { q ->
-                            q.contains("about this document") || q.contains("about this doc") ||
-                            q.contains("what is this") || q.contains("summarize") ||
-                            q.contains("summary") || q.contains("overview") ||
-                            q.contains("tell me about") || q.contains("describe this") ||
-                            q.contains("what does this") || q.contains("document about") ||
-                            q.contains("isme kya hai") || q.contains("ye kya hai") ||
-                            q.contains("is document") || q.contains("is doc")
-                        }
-
-                        val answerInstruction = when {
-                            isOverviewQuestion -> "Give a comprehensive overview in about 200-300 words."
-                            queryLower.let { q ->
-                                q.startsWith("what is") || q.startsWith("what are") ||
-                                q.startsWith("explain") || q.startsWith("describe") ||
-                                q.startsWith("how does") || q.startsWith("how do") ||
-                                q.startsWith("how is") || q.startsWith("why") ||
-                                q.contains("difference between") || q.contains("compare") ||
-                                q.contains("kya hai") || q.contains("kaise") ||
-                                q.contains("samjhao") || q.contains("batao")
-                            } -> "Give a detailed answer in about 200-300 words with examples if applicable."
-                            queryLower.let { q ->
-                                q.startsWith("list") || q.contains("types of") ||
-                                q.contains("advantages") || q.contains("features")
-                            } -> "Give a clear answer in about 150-200 words."
-                            else -> "Give a direct, concise answer. Be brief if the answer is simple, detailed if it needs explanation."
-                        }
-
-                        append("Answer the question using the document below.\n")
-                        append("$answerInstruction\n")
-                        append("Use exact names, numbers, and details from the document.\n\n")
-                        append("Question: $transcribedText\n\n")
-                        append("Document:\n")
-                        val relevantContext = if (isOverviewQuestion) {
-                            SmartDocumentSearch.getDocumentOverview(voiceDocLimit)
-                        } else {
-                            SmartDocumentSearch.getRelevantContext(transcribedText, voiceDocLimit)
-                        }
-                        if (relevantContext != null) {
-                            append(relevantContext)
-                        }
-                        append("\n\nAnswer:")
-                    } else {
-                        append("You are a helpful assistant. Give a detailed answer with examples and explanations.\n\n")
-                        append("Question: $transcribedText\n\nAnswer:")
-                    }
-                }
-
-                boostForLLM()
-
-                if (!hasEnoughMemoryForLLM()) {
-                    messages = messages + SessionMessage(
-                        "Not enough free memory for ${modelService.getActiveLLMName()}. Switch to SmolLM2 360M in Settings and try again.",
-                        isUser = false
-                    )
-                    isGenerating = false
-                    streamingResponse = ""
-                    voiceState = VoiceSessionState.IDLE
-                    return@launch
-                }
-
-                // Safety cap for voice pipeline (same dynamic limit as chat)
-                // Question is placed BEFORE document, so truncation only cuts document content
-                val voiceMaxPrompt = LLMPerformanceBooster.getMaxSafePromptLength(context, voiceModelMem)
-                val voiceSafePrompt = if (contextPrompt.length > voiceMaxPrompt) {
-                    val truncated = contextPrompt.take(voiceMaxPrompt)
-                    val lastNewline = truncated.lastIndexOf('\n')
-                    val cleanTruncated = if (lastNewline > voiceMaxPrompt / 2) truncated.substring(0, lastNewline) else truncated
-                    if (cleanTruncated.endsWith("Answer:")) cleanTruncated else "$cleanTruncated\n\nAnswer:"
-                } else contextPrompt
-
-                // ── Generate with real streaming ──
-                val voiceStartTime = System.currentTimeMillis()
-
-                var fullResponse = try {
-                    streamingResponse = "Thinking..."
-                    // ⚡ Direct bridge generation for voice chat
-                    val bridgeResult = generateWithBridge(voiceSafePrompt) { currentText ->
-                        streamingResponse = currentText
-                    }
-                    bridgeResult.fullText
-                } catch (e: Exception) {
-                    android.util.Log.e("SessionWorkspace", "Voice chat failed: ${e.message}", e)
-                    ""
-                }
-
-                if (fullResponse.isBlank()) fullResponse = "I couldn't generate a response. Try a smaller model."
-
-                // Note: KV cache is now cleared before EVERY prompt in boostForLLM()
-                // No need to track cumulative tokens - each query is independent
-
-                val aiMsg = SessionMessage(fullResponse.trim(), isUser = false)
-                messages = messages + aiMsg
-                streamingResponse = ""
-                isGenerating = false
-
-                // Smart notes
-                if (smartNotesEnabled && fullResponse.isNotBlank()) {
-                    val bullet = "• Q: ${transcribedText.take(60)}${if (transcribedText.length > 60) "…" else ""}\n  → ${fullResponse.take(200).trim()}${if (fullResponse.length > 200) "…" else ""}\n\n"
-                    notes += bullet
-                }
-
-                try { listState.animateScrollToItem(maxOf(0, messages.size - 1)) } catch (_: Exception) {}
-
-                // Step 4: Speak with accent TTS (🇮🇳 Indian, 🇺🇸 US, 🇬🇧 UK etc.)
-                // Android TTS is a system service — zero native heap, no reload needed!
-                voiceState = VoiceSessionState.SPEAKING
-                isSpeaking = true
-                try {
-                    if (prefs.useNativeTTS && accentTTS.isReady) {
-                        accentTTS.speakAndWait(
-                            text = fullResponse.trim().take(1000),
-                            accentId = prefs.ttsAccent,
-                            speed = prefs.ttsSpeed,
-                            pitch = prefs.ttsPitch
+                    // ── LISTEN with 500ms VAD for fast response ──
+                    val transcribedText = withContext(Dispatchers.Main) {
+                        androidSTT.listenAndTranscribe(
+                            silenceMs = 500L,
+                            onPartialResult = { partial ->
+                                liveTranscript = partial
+                            },
+                            onAmplitude = { amp ->
+                                liveAmplitude = amp
+                            }
                         )
-                    } else {
-                        // Fallback: Piper TTS
-                        if (!modelService.isTTSLoaded) {
-                            modelService.downloadAndLoadTTS()
-                            var waited = 0
-                            while (!modelService.isTTSLoaded && waited < 5000) {
-                                kotlinx.coroutines.delay(200)
-                                waited += 200
+                    }
+
+                    liveAmplitude = 0f
+                    if (voiceState == VoiceSessionState.IDLE) break
+
+                    // Skip empty transcriptions (noise/silence)
+                    if (transcribedText.isBlank()) continue
+
+                    liveTranscript = transcribedText
+
+                    // Add user message to chat
+                    val userMsg = SessionMessage(transcribedText, isUser = true)
+                    messages = messages + userMsg
+                    try { listState.animateScrollToItem(maxOf(0, messages.size - 1)) } catch (_: Exception) {}
+
+                    // ── THINK + SPEAK (overlapped — TTS streams as LLM generates) ──
+                    voiceState = VoiceSessionState.THINKING
+                    isGenerating = true
+                    streamingResponse = ""
+
+                    val voiceModelMem = (ModelService.getLLMOption(modelService.activeLLMModelId)?.memoryRequirement ?: 400_000_000L) / (1024L * 1024L)
+
+                    // ⚡ Compact voice prompt — minimal tokens for fast prefill
+                    val contextPrompt = buildString {
+                        if (hasDocument && SmartDocumentSearch.isDocumentIndexed()) {
+                            append("Reply in 1-2 sentences using facts from the document.\n\n")
+                            val relevantContext = SmartDocumentSearch.getRelevantContext(
+                                transcribedText,
+                                minOf(LLMPerformanceBooster.getRecommendedDocLimit(context, voiceModelMem), 600)
+                            )
+                            if (relevantContext != null) {
+                                append("Doc: $relevantContext\n\n")
                             }
-                        }
-                        if (modelService.isTTSLoaded) {
-                            val output = withContext(Dispatchers.IO) {
-                                RunAnywhere.synthesize(fullResponse.trim().take(500), TTSOptions(
-                                    rate = prefs.ttsSpeed,
-                                    pitch = prefs.ttsPitch
-                                ))
-                            }
-                            playWavAudioData(output.audioData)
+                            append("Q: $transcribedText\nA:")
+                        } else {
+                            append("Reply in 1-2 sentences. Be helpful and direct.\n\nQ: $transcribedText\nA:")
                         }
                     }
-                } catch (_: Exception) {
-                } finally {
-                    isSpeaking = false
-                }
-                // Reload STT for next voice session
-                if (!modelService.isSTTLoaded) modelService.downloadAndLoadSTT()
-                liveTranscript = ""
 
-                voiceState = VoiceSessionState.IDLE
+                    boostForLLM()
+
+                    if (!hasEnoughMemoryForLLM()) {
+                        messages = messages + SessionMessage("Low memory. Try a smaller model.", isUser = false)
+                        isGenerating = false
+                        break
+                    }
+
+                    // Safety cap
+                    val voiceMaxPrompt = LLMPerformanceBooster.getMaxSafePromptLength(context, voiceModelMem)
+                    val voiceSafePrompt = if (contextPrompt.length > voiceMaxPrompt) {
+                        val truncated = contextPrompt.take(voiceMaxPrompt)
+                        val lastNewline = truncated.lastIndexOf('\n')
+                        val clean = if (lastNewline > voiceMaxPrompt / 2) truncated.substring(0, lastNewline) else truncated
+                        if (clean.endsWith("A:")) clean else "$clean\n\nA:"
+                    } else contextPrompt
+
+                    // ── Streaming TTS: speak first sentence while LLM keeps generating ──
+                    var firstSentSpoken = false
+                    var firstSentEnd = 0
+
+                    // ⚡ maxTok=60 → 1-2 sentence voice reply, ~15-30s generation
+                    var fullResponse = try {
+                        streamingResponse = "…"
+                        val bridgeResult = generateWithBridge(
+                            voiceSafePrompt,
+                            maxTok = 60,
+                            temp = 0.7f
+                        ) { currentText ->
+                            streamingResponse = currentText
+
+                            // ── Detect first complete sentence → start TTS immediately ──
+                            if (!firstSentSpoken && currentText.length > 10) {
+                                for (i in 10 until currentText.length) {
+                                    if (currentText[i] in ".!?" &&
+                                        (i + 1 >= currentText.length || currentText[i + 1].isWhitespace())) {
+                                        val firstSent = currentText.substring(0, i + 1).trim()
+                                        if (firstSent.isNotBlank() && accentTTS.isReady) {
+                                            accentTTS.speakAsync(firstSent, prefs.ttsAccent, prefs.ttsSpeed, prefs.ttsPitch)
+                                            firstSentSpoken = true
+                                            firstSentEnd = i + 1
+                                            voiceState = VoiceSessionState.SPEAKING
+                                            isSpeaking = true
+                                        }
+                                        break
+                                    }
+                                }
+                            }
+                        }
+                        bridgeResult.fullText
+                    } catch (e: Exception) {
+                        android.util.Log.e("VoiceChat", "Generation: ${e.message}")
+                        // Recover streamed text even if coroutine was cancelled
+                        val streamed = streamingResponse
+                        if (streamed.isNotBlank() && streamed != "…") streamed else ""
+                    }
+
+                    if (voiceState == VoiceSessionState.IDLE) break
+                    if (fullResponse.isBlank()) fullResponse = "Sorry, I couldn't catch that."
+
+                    // Track KV cache tokens
+                    val voiceInputTokens = voiceSafePrompt.length / 4
+                    val voiceOutputTokens = fullResponse.length / 4
+                    cumulativeTokens += voiceInputTokens + voiceOutputTokens
+
+                    val aiMsg = SessionMessage(fullResponse.trim(), isUser = false)
+                    messages = messages + aiMsg
+                    voiceResponseText = fullResponse.trim()
+                    streamingResponse = ""
+                    isGenerating = false
+
+                    // Smart notes
+                    if (smartNotesEnabled && fullResponse.isNotBlank()) {
+                        val bullet = "• Q: ${transcribedText.take(60)}${if (transcribedText.length > 60) "…" else ""}\n  → ${fullResponse.take(200).trim()}\n\n"
+                        notes += bullet
+                    }
+
+                    try { listState.animateScrollToItem(maxOf(0, messages.size - 1)) } catch (_: Exception) {}
+                    if (voiceState == VoiceSessionState.IDLE) break
+
+                    // ── Speak remaining text (after first sentence) ──
+                    voiceState = VoiceSessionState.SPEAKING
+                    isSpeaking = true
+                    try {
+                        if (accentTTS.isReady) {
+                            val trimmedFull = fullResponse.trim()
+                            if (firstSentSpoken && trimmedFull.length > firstSentEnd) {
+                                // Queue remainder after first sentence
+                                val remainder = trimmedFull.substring(firstSentEnd).trim()
+                                if (remainder.isNotBlank()) {
+                                    accentTTS.speakQueued(remainder, prefs.ttsAccent, prefs.ttsSpeed, prefs.ttsPitch)
+                                }
+                            } else if (!firstSentSpoken) {
+                                // No sentence boundary found during streaming — speak entire response now
+                                accentTTS.speakAsync(trimmedFull.take(500), prefs.ttsAccent, prefs.ttsSpeed, prefs.ttsPitch)
+                            }
+                            // Wait for all TTS speech to finish
+                            accentTTS.waitUntilDone()
+                        }
+                    } catch (_: Exception) {
+                    } finally {
+                        isSpeaking = false
+                    }
+
+                    if (voiceState == VoiceSessionState.IDLE) break
+
+                    // Small breath before next listen cycle
+                    liveTranscript = ""
+                    voiceResponseText = ""
+                    delay(500)
+                }
             } catch (e: CancellationException) {
-                // MutationInterruptedException — ignore scroll conflicts
-                voiceState = VoiceSessionState.IDLE
+                // Job cancelled by stopVoiceSession()
             } catch (e: Exception) {
+                messages = messages + SessionMessage("Voice error: ${e.message}", isUser = false)
+            } finally {
+                voiceState = VoiceSessionState.IDLE
                 isGenerating = false
                 streamingResponse = ""
-                voiceState = VoiceSessionState.IDLE
-                messages = messages + SessionMessage("Voice error: ${e.message}", isUser = false)
+                liveTranscript = ""
+                liveAmplitude = 0f
+                isSpeaking = false
+                voiceResponseText = ""
+                voiceJob = null
             }
         }
     }
 
-    // Wire up forward-ref lambda for VAD callback
-    doStopVoiceAndProcess = { stopVoiceAndProcess() }
+    // Stop the entire voice conversation
+    fun stopVoiceSession() {
+        voiceState = VoiceSessionState.IDLE
+        androidSTT.cancel()
+        accentTTS.stop()
+        liveTranscript = ""
+        liveAmplitude = 0f
+        isGenerating = false
+        streamingResponse = ""
+        isSpeaking = false
+        voiceResponseText = ""
+        voiceJob?.cancel()
+        voiceJob = null
+    }
 
     fun explainParagraph(paragraph: String) {
         selectedParagraph = paragraph
@@ -912,9 +1156,6 @@ fun SessionWorkspaceScreen(
             } finally {
                 isExplaining = false
                 LLMPerformanceBooster.restoreAfterInference()
-                // Reload STT/TTS after generation
-                if (!modelService.isSTTLoaded) modelService.downloadAndLoadSTT()
-                if (!modelService.isTTSLoaded) modelService.downloadAndLoadTTS()
             }
         }
     }
@@ -925,7 +1166,7 @@ fun SessionWorkspaceScreen(
         streamingResponse = ""
 
         // Add a user message to chat showing what we're doing
-        val userMsg = SessionMessage("📝 Summarize: ${documentName ?: "document"}", isUser = true)
+        val userMsg = SessionMessage("Summarize: ${documentName ?: "document"}", isUser = true)
         messages = messages + userMsg
 
         scope.launch {
@@ -999,15 +1240,23 @@ fun SessionWorkspaceScreen(
                 isGenerating = false
                 streamingResponse = ""
                 LLMPerformanceBooster.restoreAfterInference()
-                // Reload STT/TTS after generation
-                if (!modelService.isSTTLoaded) modelService.downloadAndLoadSTT()
-                if (!modelService.isTTSLoaded) modelService.downloadAndLoadTTS()
             }
         }
     }
 
     // ── UI ──
 
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+    Image(
+        painter = painterResource(id = R.drawable.app_background),
+        contentDescription = null,
+        modifier = Modifier.fillMaxSize(),
+        contentScale = ContentScale.Crop
+    )
+    Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)))
     Scaffold(
         topBar = {
             TopAppBar(
@@ -1062,13 +1311,23 @@ fun SessionWorkspaceScreen(
                             "image/jpeg",
                             "image/jpg",
                             "image/bmp",
-                            "image/webp"
+                            "image/webp",
+                            // Audio files — transcribed via STT
+                            "audio/mpeg",
+                            "audio/wav",
+                            "audio/x-wav",
+                            "audio/mp4",
+                            "audio/ogg",
+                            "audio/3gpp",
+                            "audio/amr",
+                            "audio/flac",
+                            "audio/*"
                         ))
                     }) {
                         Icon(Icons.Rounded.UploadFile, "Import", tint = AccentCyan)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = PrimaryDark)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = GlassWhite)
             )
         },
         bottomBar = {
@@ -1076,15 +1335,11 @@ fun SessionWorkspaceScreen(
             if (selectedTab == 0 && modelService.isLLMLoaded) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    color = SurfaceCard.copy(alpha = 0.95f),
-                    tonalElevation = 4.dp
+                    color = GlassWhite,
+                    tonalElevation = 0.dp,
+                    shadowElevation = 8.dp
                 ) {
                     Column {
-                        // Voice session status bar
-                        if (voiceState != VoiceSessionState.IDLE) {
-                            VoiceStatusBar(voiceState, liveAmplitude, liveTranscript)
-                        }
-
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -1094,14 +1349,13 @@ fun SessionWorkspaceScreen(
                             // ── Voice Pipeline Button (the main mic) ──
                             VoicePipelineButton(
                                 voiceState = voiceState,
-                                isVoiceReady = modelService.isSTTLoaded && modelService.isLLMLoaded,
+                                isVoiceReady = androidSTT.isAvailable && modelService.isLLMLoaded,
                                 amplitude = liveAmplitude,
                                 onTap = {
                                     if (voiceState == VoiceSessionState.IDLE) {
                                         startVoiceSession()
-                                    } else if (voiceState == VoiceSessionState.LISTENING) {
-                                        stopVoiceAndProcess()
                                     }
+                                    // When active, the fullscreen overlay handles stopping
                                 }
                             )
 
@@ -1125,12 +1379,14 @@ fun SessionWorkspaceScreen(
                                 },
                                 readOnly = isGenerating || voiceState != VoiceSessionState.IDLE,
                                 colors = TextFieldDefaults.colors(
-                                    focusedContainerColor = PrimaryMid,
-                                    unfocusedContainerColor = PrimaryMid,
+                                    focusedContainerColor = Color.White.copy(alpha = 0.10f),
+                                    unfocusedContainerColor = Color.White.copy(alpha = 0.06f),
                                     focusedIndicatorColor = Color.Transparent,
-                                    unfocusedIndicatorColor = Color.Transparent
+                                    unfocusedIndicatorColor = Color.Transparent,
+                                    focusedTextColor = TextPrimary,
+                                    unfocusedTextColor = TextPrimary
                                 ),
-                                shape = RoundedCornerShape(14.dp),
+                                shape = RoundedCornerShape(20.dp),
                                 maxLines = 3
                             )
 
@@ -1161,7 +1417,7 @@ fun SessionWorkspaceScreen(
                 }
             }
         },
-        containerColor = PrimaryDark
+        containerColor = Color.Transparent
     ) { padding ->
         Column(modifier = modifier.fillMaxSize().padding(padding)) {
 
@@ -1184,7 +1440,7 @@ fun SessionWorkspaceScreen(
             // ── Tab Row (2 tabs only: Chat, Notes) ──
             TabRow(
                 selectedTabIndex = selectedTab,
-                containerColor = PrimaryDark,
+                containerColor = GlassWhite,
                 contentColor = AccentCyan,
                 divider = {
                     HorizontalDivider(color = TextMuted.copy(alpha = 0.15f))
@@ -1193,15 +1449,25 @@ fun SessionWorkspaceScreen(
                 Tab(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
-                    text = { Text("💬 Chat") },
+                    text = { Text("Chat") },
                     selectedContentColor = AccentCyan,
                     unselectedContentColor = TextMuted
                 )
                 Tab(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    text = { Text("📝 Notes") },
-                    selectedContentColor = NoteAmber,
+                    text = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Preview")
+                            if (pdfEntries.isNotEmpty()) {
+                                Spacer(Modifier.width(4.dp))
+                                Badge(containerColor = AccentCyan) {
+                                    Text("${pdfEntries.size}", color = Color.White, fontSize = 10.sp)
+                                }
+                            }
+                        }
+                    },
+                    selectedContentColor = AccentCyan,
                     unselectedContentColor = TextMuted
                 )
             }
@@ -1237,7 +1503,7 @@ fun SessionWorkspaceScreen(
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                         ) {
                             Text(
-                                "📄 Document Info",
+                                "Document Info",
                                 style = MaterialTheme.typography.titleSmall,
                                 color = AccentCyan,
                                 fontWeight = FontWeight.Bold
@@ -1284,35 +1550,100 @@ fun SessionWorkspaceScreen(
                     streamingResponse = streamingResponse,
                     isGenerating = isGenerating,
                     isSpeaking = isSpeaking,
-                    isTTSLoaded = modelService.isTTSLoaded || accentTTS.isReady,
+                    isTTSLoaded = accentTTS.isReady,
                     listState = listState,
                     onSpeak = { speakText(it) },
                     keyPointsMap = keyPointsMap,
                     generatingKeyPointsFor = generatingKeyPointsFor,
-                    onGenerateKeyPoints = { msg -> generateKeyPoints(msg) }
+                    onGenerateKeyPoints = { msg -> generateKeyPoints(msg) },
+                    diagramMermaidMap = diagramMermaidMap,
+                    generatingDiagramFor = generatingDiagramFor,
+                    onGenerateDiagram = { msg -> generateDiagram(msg) },
+                    onShowDiagram = { ts -> showDiagramTimestamp = ts },
+                    onAddToDocument = { aiMsg ->
+                        // Find the user question right before this AI answer
+                        val idx = messages.indexOf(aiMsg)
+                        val userQuestion = if (idx > 0) messages[idx - 1].text else "Question"
+                        val entry = PdfQAEntry(
+                            question = userQuestion,
+                            answer = aiMsg.text,
+                            keyPoints = keyPointsMap[aiMsg.timestamp],
+                            diagramCode = diagramMermaidMap[aiMsg.timestamp],
+                            timestamp = aiMsg.timestamp
+                        )
+                        // Don't add duplicates
+                        if (pdfEntries.none { it.timestamp == aiMsg.timestamp }) {
+                            pdfEntries.add(entry)
+                            Toast.makeText(context, "✅ Added to document (${pdfEntries.size} entries)", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(context, "Already added!", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 )
 
-                1 -> NotesTabContent(
-                    notes = notes,
-                    onNotesChanged = { notes = it },
-                    smartNotesEnabled = smartNotesEnabled,
-                    onSmartNotesToggle = { smartNotesEnabled = it },
-                    diagramsEnabled = diagramsEnabled,
-                    onDiagramsToggle = { diagramsEnabled = it },
-                    hasDocument = hasDocument,
-                    isGenerating = isGenerating,
-                    onGenerateSummary = { generateSummary() }
+                1 -> PreviewTabContent(
+                    pdfEntries = pdfEntries,
+                    documentName = documentName,
+                    onRemoveEntry = { entry -> pdfEntries.remove(entry) },
+                    onClearAll = { pdfEntries.clear() },
+                    isGeneratingPdf = isGeneratingPdf,
+                    onDownloadPdf = {
+                        if (pdfEntries.isNotEmpty() && !isGeneratingPdf) {
+                            isGeneratingPdf = true
+                            scope.launch {
+                                try {
+                                    // Step 1: Use pre-captured bitmaps from diagram dialog
+                                    val diagramImages = mutableMapOf<Long, ByteArray>()
+                                    for (entry in pdfEntries.toList()) {
+                                        if (!entry.diagramCode.isNullOrBlank()) {
+                                            // Use cached bitmap if available (captured from dialog)
+                                            val cached = diagramBitmapMap[entry.timestamp]
+                                            if (cached != null) {
+                                                diagramImages[entry.timestamp] = cached
+                                            } else {
+                                                // Fallback: try off-screen capture
+                                                val bytes = PdfExportManager.captureMermaidBitmap(context, entry.diagramCode)
+                                                if (bytes != null) {
+                                                    diagramImages[entry.timestamp] = bytes
+                                                }
+                                            }
+                                        }
+                                    }
+                                    // Step 2: Generate PDF (IO thread)
+                                    val pdfFile = withContext(Dispatchers.IO) {
+                                        PdfExportManager.generatePdf(
+                                            context = context,
+                                            entries = pdfEntries.toList(),
+                                            diagramImages = diagramImages,
+                                            documentName = documentName
+                                        )
+                                    }
+                                    // Step 3: Share
+                                    if (pdfFile != null) {
+                                        PdfExportManager.sharePdf(context, pdfFile)
+                                    } else {
+                                        Toast.makeText(context, "❌ PDF generation failed", Toast.LENGTH_SHORT).show()
+                                    }
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "❌ Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                                } finally {
+                                    isGeneratingPdf = false
+                                }
+                            }
+                        }
+                    }
                 )
             }
         }
     }
+    } // Close glassmorphism background Box
 
     // ── Explain Dialog ──
     if (showExplainDialog) {
         AlertDialog(
             onDismissRequest = { showExplainDialog = false },
             title = {
-                Text("🧠 AI Explanation", style = MaterialTheme.typography.titleMedium)
+                Text("AI Explanation", style = MaterialTheme.typography.titleMedium)
             },
             text = {
                 Column(
@@ -1323,7 +1654,7 @@ fun SessionWorkspaceScreen(
                     // Original text
                     Card(
                         shape = RoundedCornerShape(8.dp),
-                        colors = CardDefaults.cardColors(containerColor = PrimaryMid)
+                        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.08f))
                     ) {
                         Text(
                             text = selectedParagraph.take(300),
@@ -1372,9 +1703,350 @@ fun SessionWorkspaceScreen(
                     }
                 }
             },
-            containerColor = SurfaceCard,
-            shape = RoundedCornerShape(20.dp)
+            containerColor = Color.White.copy(alpha = 0.10f),
+            shape = RoundedCornerShape(24.dp)
         )
+    }
+
+    // ── Fullscreen Voice Conversation Overlay ──
+    if (voiceState != VoiceSessionState.IDLE) {
+        Dialog(
+            onDismissRequest = { stopVoiceSession() },
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                dismissOnBackPress = true,
+                dismissOnClickOutside = false
+            )
+        ) {
+            val stateColor = when (voiceState) {
+                VoiceSessionState.LISTENING -> Color(0xFF38BDF8)   // Light Blue
+                VoiceSessionState.THINKING -> Color(0xFF22D3EE)    // Cyan
+                VoiceSessionState.SPEAKING -> AccentGreen
+                else -> TextMuted
+            }
+            val stateText = when (voiceState) {
+                VoiceSessionState.LISTENING -> "Listening..."
+                VoiceSessionState.THINKING -> "Thinking..."
+                VoiceSessionState.SPEAKING -> "Speaking..."
+                else -> ""
+            }
+            val stateIcon = when (voiceState) {
+                VoiceSessionState.LISTENING -> Icons.Rounded.Mic
+                VoiceSessionState.THINKING -> Icons.Rounded.Psychology
+                VoiceSessionState.SPEAKING -> Icons.Rounded.VolumeUp
+                else -> Icons.Rounded.Mic
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(
+                                Color(0xDD1A1040),
+                                Color(0xF00E0820)
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(32.dp)
+                ) {
+                    // State label
+                    Text(
+                        stateText,
+                        color = stateColor,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(Modifier.height(32.dp))
+
+                    // ── Glowing Ring Circle (like reference image) ──
+                    val voiceTransition = rememberInfiniteTransition(label = "voice_glow")
+
+                    // Rotation animation — ring rotates continuously
+                    val rotation by voiceTransition.animateFloat(
+                        initialValue = 0f, targetValue = 360f,
+                        animationSpec = infiniteRepeatable(
+                            tween(4000, easing = LinearEasing)
+                        ), label = "rotation"
+                    )
+
+                    // Breathing scale — ring gently pulses
+                    val breathScale by voiceTransition.animateFloat(
+                        initialValue = 0.95f, targetValue = 1.08f,
+                        animationSpec = infiniteRepeatable(
+                            tween(1500, easing = FastOutSlowInEasing),
+                            RepeatMode.Reverse
+                        ), label = "breathe"
+                    )
+
+                    // Glow pulse alpha
+                    val glowAlpha by voiceTransition.animateFloat(
+                        initialValue = 0.3f, targetValue = 0.7f,
+                        animationSpec = infiniteRepeatable(
+                            tween(1200, easing = FastOutSlowInEasing),
+                            RepeatMode.Reverse
+                        ), label = "glow"
+                    )
+
+                    // Second ring offset rotation
+                    val rotation2 by voiceTransition.animateFloat(
+                        initialValue = 360f, targetValue = 0f,
+                        animationSpec = infiniteRepeatable(
+                            tween(6000, easing = LinearEasing)
+                        ), label = "rotation2"
+                    )
+
+                    // Amplitude boost for listening
+                    val ampBoost = if (voiceState == VoiceSessionState.LISTENING) 1f + liveAmplitude * 0.4f else 1f
+
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(220.dp)
+                            .clickable { stopVoiceSession() }
+                    ) {
+                        // Outer glow halo
+                        Canvas(
+                            modifier = Modifier
+                                .size(220.dp)
+                                .scale(breathScale * ampBoost)
+                                .graphicsLayer { alpha = glowAlpha }
+                        ) {
+                            drawCircle(
+                                color = stateColor.copy(alpha = 0.15f),
+                                radius = size.minDimension / 2
+                            )
+                        }
+
+                        // Primary glowing ring — rotates
+                        Canvas(
+                            modifier = Modifier
+                                .size(180.dp)
+                                .scale(breathScale * ampBoost)
+                        ) {
+                            rotate(rotation) {
+                                drawArc(
+                                    brush = Brush.sweepGradient(
+                                        0f to stateColor.copy(alpha = 0.0f),
+                                        0.3f to stateColor.copy(alpha = 0.9f),
+                                        0.6f to Color.White.copy(alpha = 0.95f),
+                                        0.8f to stateColor.copy(alpha = 0.9f),
+                                        1f to stateColor.copy(alpha = 0.0f)
+                                    ),
+                                    startAngle = 0f,
+                                    sweepAngle = 360f,
+                                    useCenter = false,
+                                    style = Stroke(width = 6.dp.toPx(), cap = StrokeCap.Round)
+                                )
+                            }
+                        }
+
+                        // Secondary subtle ring — counter-rotates
+                        Canvas(
+                            modifier = Modifier
+                                .size(195.dp)
+                                .scale(breathScale)
+                        ) {
+                            rotate(rotation2) {
+                                drawArc(
+                                    brush = Brush.sweepGradient(
+                                        0f to stateColor.copy(alpha = 0.0f),
+                                        0.4f to stateColor.copy(alpha = 0.4f),
+                                        0.7f to Color.White.copy(alpha = 0.5f),
+                                        1f to stateColor.copy(alpha = 0.0f)
+                                    ),
+                                    startAngle = 0f,
+                                    sweepAngle = 360f,
+                                    useCenter = false,
+                                    style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
+                                )
+                            }
+                        }
+
+                        // Inner dark circle with icon
+                        Box(
+                            modifier = Modifier
+                                .size(130.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF0A0E1A).copy(alpha = 0.85f))
+                                .border(
+                                    width = 1.5.dp,
+                                    brush = Brush.linearGradient(
+                                        listOf(stateColor.copy(alpha = 0.5f), Color.White.copy(alpha = 0.2f))
+                                    ),
+                                    shape = CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                stateIcon,
+                                contentDescription = "Tap to stop",
+                                tint = stateColor,
+                                modifier = Modifier.size(48.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(32.dp))
+
+                    // Live transcript
+                    if (liveTranscript.isNotBlank()) {
+                        Text(
+                            "\u201C$liveTranscript\u201D",
+                            color = Color.White.copy(alpha = 0.8f),
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(horizontal = 24.dp)
+                        )
+                    }
+
+                    // Streaming response preview during thinking
+                    if (voiceState == VoiceSessionState.THINKING && streamingResponse.isNotBlank() && streamingResponse != "...") {
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            streamingResponse.take(120) + if (streamingResponse.length > 120) "..." else "",
+                            color = AccentCyan.copy(alpha = 0.7f),
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(horizontal = 24.dp)
+                        )
+                    }
+
+                    // Show AI response text while speaking
+                    if (voiceState == VoiceSessionState.SPEAKING && voiceResponseText.isNotBlank()) {
+                        Spacer(Modifier.height(16.dp))
+                        Text(
+                            "\"${voiceResponseText.take(200)}${if (voiceResponseText.length > 200) "..." else ""}\"",
+                            color = AccentGreen.copy(alpha = 0.8f),
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            maxLines = 4,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(horizontal = 24.dp)
+                        )
+                    }
+
+                    Spacer(Modifier.height(24.dp))
+
+                    Text(
+                        "Tap circle to stop",
+                        color = Color.White.copy(alpha = 0.3f),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        }
+    }
+
+    // ── Audio Transcription Loading Dialog ──
+    if (isTranscribingAudio) {
+        Dialog(
+            onDismissRequest = { /* Cannot dismiss during transcription */ },
+            properties = DialogProperties(
+                dismissOnBackPress = false,
+                dismissOnClickOutside = false
+            )
+        ) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.10f)),
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Animated mic icon
+                    val infiniteTransition = rememberInfiniteTransition(label = "stt")
+                    val pulse by infiniteTransition.animateFloat(
+                        initialValue = 0.9f,
+                        targetValue = 1.15f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(800, easing = FastOutSlowInEasing),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = "pulse"
+                    )
+                    Icon(
+                        Icons.Rounded.Mic,
+                        contentDescription = "Transcribing",
+                        tint = AccentCyan,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .scale(pulse)
+                    )
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Text(
+                        "Transcribing Audio...",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(Modifier.height(12.dp))
+
+                    // Progress bar
+                    LinearProgressIndicator(
+                        progress = { audioTranscriptionProgress },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(6.dp)
+                            .clip(RoundedCornerShape(3.dp)),
+                        color = AccentCyan,
+                        trackColor = TextMuted.copy(alpha = 0.2f)
+                    )
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Text(
+                        "${(audioTranscriptionProgress * 100).toInt()}%",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = AccentCyan,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Text(
+                        "\uD83D\uDD0A Audio is playing for transcription.\nPlease wait in a quiet environment.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextMuted,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
+            }
+        }
+    }
+
+    // ── Diagram Dialog (fullscreen WebView with Mermaid.js) ──
+    if (showDiagramTimestamp != null) {
+        val mermaidCode = diagramMermaidMap[showDiagramTimestamp]
+        val ts = showDiagramTimestamp!!
+        if (mermaidCode != null) {
+            MermaidDiagramDialog(
+                mermaidCode = mermaidCode,
+                onDismiss = { showDiagramTimestamp = null },
+                onBitmapCaptured = { bytes ->
+                    diagramBitmapMap[ts] = bytes
+                    android.util.Log.d("Diagram", "Bitmap captured from dialog: ${bytes.size} bytes")
+                }
+            )
+        }
     }
 }
 
@@ -1546,10 +2218,10 @@ private fun VoiceStatusBar(voiceState: VoiceSessionState, amplitude: Float = 0f,
     }
 
     val statusText = when (voiceState) {
-        VoiceSessionState.LISTENING -> "🎤 Listening… auto-stops when you pause"
-        VoiceSessionState.TRANSCRIBING -> "✍️ Transcribing your speech…"
-        VoiceSessionState.THINKING -> "🧠 AI is thinking…"
-        VoiceSessionState.SPEAKING -> "🔊 Speaking with accent…"
+        VoiceSessionState.LISTENING -> "Listening... auto-stops when you pause"
+        VoiceSessionState.TRANSCRIBING -> "Transcribing your speech..."
+        VoiceSessionState.THINKING -> "AI is thinking..."
+        VoiceSessionState.SPEAKING -> "Speaking with accent..."
         else -> ""
     }
 
@@ -1642,7 +2314,12 @@ private fun ChatTabContentWithDocument(
     onSpeak: (String) -> Unit,
     keyPointsMap: Map<Long, String>,
     generatingKeyPointsFor: Long?,
-    onGenerateKeyPoints: (SessionMessage) -> Unit
+    onGenerateKeyPoints: (SessionMessage) -> Unit,
+    diagramMermaidMap: Map<Long, String>,
+    generatingDiagramFor: Long?,
+    onGenerateDiagram: (SessionMessage) -> Unit,
+    onShowDiagram: (Long) -> Unit,
+    onAddToDocument: ((SessionMessage) -> Unit)? = null
 ) {
     LazyColumn(
         state = listState,
@@ -1666,7 +2343,12 @@ private fun ChatTabContentWithDocument(
                 onLongPress = null,
                 keyPoints = keyPointsMap[message.timestamp],
                 isGeneratingKeyPoints = generatingKeyPointsFor == message.timestamp,
-                onGenerateKeyPoints = { onGenerateKeyPoints(message) }
+                onGenerateKeyPoints = { onGenerateKeyPoints(message) },
+                hasDiagram = diagramMermaidMap.containsKey(message.timestamp),
+                isGeneratingDiagram = generatingDiagramFor == message.timestamp,
+                onGenerateDiagram = { onGenerateDiagram(message) },
+                onShowDiagram = { onShowDiagram(message.timestamp) },
+                onAddToDocument = if (!message.isUser) {{ onAddToDocument?.invoke(message) }} else null
             )
         }
 
@@ -1755,7 +2437,12 @@ private fun ChatBubble(
     onLongPress: ((String) -> Unit)? = null,
     keyPoints: String? = null,
     isGeneratingKeyPoints: Boolean = false,
-    onGenerateKeyPoints: (() -> Unit)? = null
+    onGenerateKeyPoints: (() -> Unit)? = null,
+    hasDiagram: Boolean = false,
+    isGeneratingDiagram: Boolean = false,
+    onGenerateDiagram: (() -> Unit)? = null,
+    onShowDiagram: (() -> Unit)? = null,
+    onAddToDocument: (() -> Unit)? = null
 ) {
     val clipboardManager = LocalClipboardManager.current
     val haptic = LocalHapticFeedback.current
@@ -1777,7 +2464,7 @@ private fun ChatBubble(
                     bottomStart = 16.dp,
                     bottomEnd = 16.dp
                 ),
-                colors = CardDefaults.cardColors(containerColor = AccentViolet)
+                colors = CardDefaults.cardColors(containerColor = AccentCyan)
             ) {
                 Text(
                     text = message.text,
@@ -1812,16 +2499,15 @@ private fun ChatBubble(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(26.dp)
+                        .size(40.dp)
                         .clip(CircleShape)
                         .background(AccentCyan.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        Icons.Rounded.School,
-                        null,
-                        tint = AccentCyan,
-                        modifier = Modifier.size(15.dp)
+                    Image(
+                        painter = painterResource(id = R.drawable.chat_logo),
+                        contentDescription = null,
+                        modifier = Modifier.size(28.dp)
                     )
                 }
                 Spacer(Modifier.width(6.dp))
@@ -1847,13 +2533,13 @@ private fun ChatBubble(
                             }
                         ),
                     shape = RoundedCornerShape(4.dp),
-                    colors = CardDefaults.cardColors(containerColor = SurfaceCard)
+                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.08f))
                 ) {
                     Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
                         MarkdownText(
                             markdown = message.text,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color(0xFFF1FAFF)
+                            color = TextPrimary
                         )
                         if (isStreaming) {
                             Text("▊", color = AccentCyan, style = MaterialTheme.typography.bodyMedium)
@@ -1884,7 +2570,7 @@ private fun ChatBubble(
                             HorizontalDivider(color = AccentCyan.copy(alpha = 0.2f))
                             Spacer(Modifier.height(8.dp))
                             Text(
-                                "📝 Summarized Key Points:",
+                                "Summarized Key Points:",
                                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                                 color = AccentCyan
                             )
@@ -1892,10 +2578,49 @@ private fun ChatBubble(
                             MarkdownText(
                                 markdown = keyPoints,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFFF1FAFF).copy(alpha = 0.9f)
+                                color = TextPrimary.copy(alpha = 0.9f)
                             )
                             if (isGeneratingKeyPoints) {
                                 Text("▊", color = AccentCyan, style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+
+                        // ── Diagram Section (inside the same card) ──
+                        if (isGeneratingDiagram) {
+                            Spacer(Modifier.height(10.dp))
+                            HorizontalDivider(color = AccentPink.copy(alpha = 0.2f))
+                            Spacer(Modifier.height(8.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(14.dp),
+                                    strokeWidth = 2.dp,
+                                    color = AccentPink
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    "Generating diagram…",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = AccentPink.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+
+                        if (hasDiagram && !isGeneratingDiagram) {
+                            Spacer(Modifier.height(10.dp))
+                            HorizontalDivider(color = AccentPink.copy(alpha = 0.2f))
+                            Spacer(Modifier.height(8.dp))
+                            OutlinedButton(
+                                onClick = { onShowDiagram?.invoke() },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = AccentPink
+                                ),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, AccentPink.copy(alpha = 0.4f)),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Icon(Icons.Rounded.AutoGraph, null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text("View Diagram", style = MaterialTheme.typography.labelMedium)
                             }
                         }
                     }
@@ -1907,7 +2632,7 @@ private fun ChatBubble(
                     onDismissRequest = { showOptionsMenu = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text("📋  Copy") },
+                        text = { Text("Copy") },
                         onClick = {
                             clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(message.text))
                             showOptionsMenu = false
@@ -1915,7 +2640,7 @@ private fun ChatBubble(
                         leadingIcon = { Icon(Icons.Rounded.ContentCopy, null, modifier = Modifier.size(20.dp)) }
                     )
                     DropdownMenuItem(
-                        text = { Text(if (keyPoints != null) "✅  Key Points Generated" else "🔑  Generate Key Points") },
+                        text = { Text(if (keyPoints != null) "Key Points Generated" else "Generate Key Points") },
                         onClick = {
                             if (keyPoints == null && !isGeneratingKeyPoints) {
                                 onGenerateKeyPoints?.invoke()
@@ -1926,19 +2651,28 @@ private fun ChatBubble(
                         leadingIcon = { Icon(Icons.Rounded.ListAlt, null, modifier = Modifier.size(20.dp)) }
                     )
                     DropdownMenuItem(
-                        text = { Text("📄  Add to Document") },
+                        text = { Text("Add to Document") },
                         onClick = {
-                            // TODO: Add response to document/notes
+                            onAddToDocument?.invoke()
                             showOptionsMenu = false
                         },
                         leadingIcon = { Icon(Icons.Rounded.NoteAdd, null, modifier = Modifier.size(20.dp)) }
                     )
                     DropdownMenuItem(
-                        text = { Text("📊  Generate Diagram/Visual") },
+                        text = { Text(
+                            if (hasDiagram) "View Diagram"
+                            else if (isGeneratingDiagram) "Generating Diagram..."
+                            else "Generate Diagram/Visual"
+                        ) },
                         onClick = {
-                            // TODO: Generate diagram from this response
+                            if (hasDiagram) {
+                                onShowDiagram?.invoke()
+                            } else if (!isGeneratingDiagram) {
+                                onGenerateDiagram?.invoke()
+                            }
                             showOptionsMenu = false
                         },
+                        enabled = !isGeneratingDiagram,
                         leadingIcon = { Icon(Icons.Rounded.AutoGraph, null, modifier = Modifier.size(20.dp)) }
                     )
                 }
@@ -1965,137 +2699,376 @@ private fun ChatBubble(
 }
 
 // ═══════════════════════════════════════════
-// ── Notes Tab (kept unchanged) ──
+// ── Preview Tab (PDF Document Preview) ──
 // ═══════════════════════════════════════════
 
 @Composable
-private fun NotesTabContent(
-    notes: String,
-    onNotesChanged: (String) -> Unit,
-    smartNotesEnabled: Boolean,
-    onSmartNotesToggle: (Boolean) -> Unit,
-    diagramsEnabled: Boolean,
-    onDiagramsToggle: (Boolean) -> Unit,
-    hasDocument: Boolean,
-    isGenerating: Boolean,
-    onGenerateSummary: () -> Unit
+private fun PreviewTabContent(
+    pdfEntries: List<PdfQAEntry>,
+    documentName: String?,
+    onRemoveEntry: (PdfQAEntry) -> Unit,
+    onClearAll: () -> Unit,
+    onDownloadPdf: () -> Unit,
+    isGeneratingPdf: Boolean = false
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
-    ) {
-        // Toggles
-        Card(
-            shape = RoundedCornerShape(14.dp),
-            colors = CardDefaults.cardColors(containerColor = SurfaceCard.copy(alpha = 0.6f))
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Smart Notes", style = MaterialTheme.typography.titleSmall, color = NoteAmber)
-                        Text(
-                            "Auto-generate notes from AI answers",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextMuted
-                        )
-                    }
-                    Switch(
-                        checked = smartNotesEnabled,
-                        onCheckedChange = onSmartNotesToggle,
-                        colors = SwitchDefaults.colors(checkedTrackColor = NoteAmber)
-                    )
-                }
-
-                HorizontalDivider(
-                    modifier = Modifier.padding(vertical = 12.dp),
-                    color = TextMuted.copy(alpha = 0.1f)
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Diagrams Mode", style = MaterialTheme.typography.titleSmall, color = AccentCyan)
-                        Text(
-                            "AI creates tables & text diagrams",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextMuted
-                        )
-                    }
-                    Switch(
-                        checked = diagramsEnabled,
-                        onCheckedChange = onDiagramsToggle,
-                        colors = SwitchDefaults.colors(checkedTrackColor = AccentCyan)
-                    )
-                }
-            }
-        }
-
-        Spacer(Modifier.height(16.dp))
-
-        // Generate summary button
-        if (hasDocument) {
-            OutlinedButton(
-                onClick = onGenerateSummary,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isGenerating,
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Icon(Icons.Rounded.Summarize, null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(8.dp))
-                Text(if (isGenerating) "Generating…" else "✨ Generate Summary from Document")
-            }
-            Spacer(Modifier.height(16.dp))
-        }
-
-        // Notes editor
-        Text("Your Notes", style = MaterialTheme.typography.titleSmall, color = TextPrimary)
-        Spacer(Modifier.height(8.dp))
-
-        TextField(
-            value = notes,
-            onValueChange = onNotesChanged,
+    Column(modifier = Modifier.fillMaxSize()) {
+        // ── Action bar ──
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 300.dp),
-            placeholder = {
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    "Your notes will appear here…\n\n• Enable 'Smart Notes' to auto-generate from AI answers\n• Or type your own notes\n• Import a document and click 'Generate Summary'",
-                    color = TextMuted.copy(alpha = 0.5f)
+                    "Document Preview",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = AccentCyan
                 )
-            },
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = SurfaceCard.copy(alpha = 0.4f),
-                unfocusedContainerColor = SurfaceCard.copy(alpha = 0.4f),
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent
-            ),
-            shape = RoundedCornerShape(14.dp),
-            textStyle = MaterialTheme.typography.bodyMedium.copy(color = TextPrimary)
-        )
-
-        if (notes.isNotBlank()) {
-            Spacer(Modifier.height(12.dp))
-            TextButton(onClick = { onNotesChanged("") }) {
-                Icon(
-                    Icons.Rounded.ClearAll,
-                    null,
-                    tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.size(18.dp)
+                Text(
+                    if (pdfEntries.isEmpty()) "Long-press AI answers → 'Add to Document'"
+                    else "${pdfEntries.size} Q&A entries ready",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextMuted
                 )
+            }
+            if (pdfEntries.isNotEmpty()) {
+                IconButton(onClick = onClearAll, modifier = Modifier.size(36.dp)) {
+                    Icon(
+                        Icons.Rounded.DeleteSweep,
+                        "Clear all",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
                 Spacer(Modifier.width(4.dp))
-                Text("Clear Notes", color = MaterialTheme.colorScheme.error)
+                Button(
+                    onClick = onDownloadPdf,
+                    enabled = !isGeneratingPdf,
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = AccentCyan),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+                ) {
+                    if (isGeneratingPdf) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = Color.White
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text("Generating…", color = Color.White, fontSize = 11.sp)
+                    } else {
+                        Icon(Icons.Rounded.Download, null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("PDF", fontSize = 12.sp)
+                    }
+                }
+            }
+        }
+
+        if (pdfEntries.isEmpty()) {
+            // ── Empty state ──
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    Icons.Rounded.Description,
+                    null,
+                    modifier = Modifier.size(56.dp),
+                    tint = TextMuted.copy(alpha = 0.3f)
+                )
+                Spacer(Modifier.height(16.dp))
+                Text("No entries yet", style = MaterialTheme.typography.titleMedium, color = TextMuted)
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "Long-press any AI answer in Chat tab\nand tap 'Add to Document'",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextMuted.copy(alpha = 0.7f),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+            }
+        } else {
+            // ── Paper-like PDF preview ──
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.White.copy(alpha = 0.06f)),
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // PDF Title header
+                item {
+                    Card(
+                        shape = RoundedCornerShape(6.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.08f)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                documentName?.let { "Study Notes: $it" } ?: "YouLearn Study Notes",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                color = AccentCyan,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            val dateStr = remember {
+                                java.text.SimpleDateFormat("MMMM dd, yyyy", java.util.Locale.US)
+                                    .format(java.util.Date())
+                            }
+                            Text(
+                                "Generated on $dateStr",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFF78829A)
+                            )
+                            Text(
+                                "${pdfEntries.size} Q&A entries",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFF78829A)
+                            )
+                            Spacer(Modifier.height(10.dp))
+                            HorizontalDivider(color = Color(0xFF00BCD4), thickness = 2.dp)
+                        }
+                    }
+                }
+
+                // Q&A entries (paper-style cards)
+                items(pdfEntries.size) { index ->
+                    PdfPreviewEntryCard(
+                        index = index + 1,
+                        entry = pdfEntries[index],
+                        onRemove = { onRemoveEntry(pdfEntries[index]) }
+                    )
+                }
+
+                // Footer
+                item {
+                    Card(
+                        shape = RoundedCornerShape(6.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.08f)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            HorizontalDivider(color = Color(0xFF00BCD4), thickness = 1.dp)
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                "Generated by YouLearn AI • On-Device Learning Assistant",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color(0xFF78829A)
+                            )
+                        }
+                    }
+                }
             }
         }
     }
+}
+
+@Composable
+private fun PdfPreviewEntryCard(
+    index: Int,
+    entry: PdfQAEntry,
+    onRemove: () -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(6.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.08f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // ── Header: Q number + remove ──
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Q$index.",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = AccentCyan,
+                    fontWeight = FontWeight.Bold
+                )
+                IconButton(onClick = onRemove, modifier = Modifier.size(24.dp)) {
+                    Icon(
+                        Icons.Rounded.Close,
+                        "Remove",
+                        tint = Color(0xFF78829A),
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(6.dp))
+
+            // ── Question box (violet background, like PDF) ──
+            Card(
+                shape = RoundedCornerShape(6.dp),
+                colors = CardDefaults.cardColors(containerColor = AccentCyan.copy(alpha = 0.10f)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, AccentCyan.copy(alpha = 0.3f))
+            ) {
+                Text(
+                    entry.question,
+                    modifier = Modifier.padding(10.dp),
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFF1F5F9)
+                )
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            // ── Answer label + full text ──
+            Text(
+                "Answer:",
+                style = MaterialTheme.typography.titleSmall,
+                color = Color(0xFF00BCD4),
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.height(4.dp))
+
+            MarkdownText(
+                markdown = entry.answer,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFFF1F5F9)
+            )
+
+            // ── Key Points (if any) ──
+            if (!entry.keyPoints.isNullOrBlank()) {
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    "Key Points",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = Color(0xFFF59E0B),
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.height(4.dp))
+                Card(
+                    shape = RoundedCornerShape(6.dp),
+                    colors = CardDefaults.cardColors(containerColor = NoteAmber.copy(alpha = 0.10f)),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF59E0B).copy(alpha = 0.3f))
+                ) {
+                    Column(modifier = Modifier.padding(10.dp)) {
+                        entry.keyPoints.lines()
+                            .filter { it.trim().isNotEmpty() }
+                            .forEach { line ->
+                                Text(
+                                    line.trim(),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFFF1F5F9),
+                                    modifier = Modifier.padding(bottom = 2.dp)
+                                )
+                            }
+                    }
+                }
+            }
+
+            // ── Diagram (if any) — rendered via WebView ──
+            if (!entry.diagramCode.isNullOrBlank()) {
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    "Visual Diagram",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = Color(0xFF00BCD4),
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.height(4.dp))
+                Card(
+                    shape = RoundedCornerShape(6.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.08f)),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF00BCD4))
+                ) {
+                    val diagramHtml = remember(entry.diagramCode) {
+                        buildPreviewDiagramHtml(entry.diagramCode)
+                    }
+                    AndroidView(
+                        factory = { ctx ->
+                            WebView(ctx).apply {
+                                settings.javaScriptEnabled = true
+                                settings.domStorageEnabled = true
+                                settings.useWideViewPort = true
+                                settings.loadWithOverviewMode = true
+                                settings.builtInZoomControls = true
+                                settings.displayZoomControls = false
+                                settings.setSupportZoom(true)
+                                isVerticalScrollBarEnabled = true
+                                isHorizontalScrollBarEnabled = true
+                                setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                                webViewClient = WebViewClient()
+                                loadDataWithBaseURL(
+                                    "https://cdn.jsdelivr.net",
+                                    diagramHtml,
+                                    "text/html",
+                                    "UTF-8",
+                                    null
+                                )
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(420.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** Build HTML for inline Mermaid diagram preview (matches PDF capture styling) */
+private fun buildPreviewDiagramHtml(mermaidCode: String): String {
+    return """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { background: #0F1629; padding: 12px; display: flex; justify-content: center; align-items: flex-start; font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+                .mermaid { width: 100%; }
+                .mermaid svg { width: 100% !important; height: auto !important; min-height: 300px; }
+                .node rect, .node polygon {
+                    fill: rgba(56,189,248,0.12) !important; stroke: #38BDF8 !important;
+                    stroke-width: 2px !important; rx: 10px !important;
+                    filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.3)) !important;
+                }
+                .nodeLabel { color: #F1F5F9 !important; font-size: 14px !important; font-weight: 600 !important; }
+                .edgePath .path { stroke: #94A3B8 !important; stroke-width: 2px !important; }
+                marker path { fill: #94A3B8 !important; }
+                .error-text { color: #E53E3E; font-family: monospace; font-size: 13px; padding: 16px; text-align: center; }
+            </style>
+        </head>
+        <body>
+            <div class="mermaid">${mermaidCode}</div>
+            <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+            <script>
+                mermaid.initialize({
+                    startOnLoad: true, theme: 'dark',
+                    themeVariables: { primaryColor: 'rgba(56,189,248,0.12)', primaryTextColor: '#F1F5F9', primaryBorderColor: '#38BDF8', lineColor: '#94A3B8', fontSize: '14px' },
+                    flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis', nodeSpacing: 40, rankSpacing: 50 }
+                });
+                mermaid.parseError = function(err, hash) {
+                    var msg = (typeof err === 'string') ? err : (err.message || err.str || JSON.stringify(err));
+                    document.querySelector('.mermaid').innerHTML = '<p class="error-text">Diagram error: ' + msg + '</p>';
+                };
+            </script>
+        </body>
+        </html>
+    """.trimIndent()
 }
 
 // ═══════════════════════════════════════════
@@ -2179,7 +3152,7 @@ private fun MarkdownText(
                 if (i < lines.size) i++ // skip closing ```
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A2E)),
+                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.06f)),
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
@@ -2187,7 +3160,7 @@ private fun MarkdownText(
                         style = style.copy(
                             fontFamily = FontFamily.Monospace,
                             fontSize = 12.sp,
-                            color = Color(0xFF8BE9FD)
+                            color = AccentCyan
                         ),
                         modifier = Modifier.padding(10.dp)
                     )
@@ -2371,8 +3344,8 @@ private fun parseInlineMarkdown(text: String, baseColor: Color): AnnotatedString
                     if (end != -1) {
                         withStyle(SpanStyle(
                             fontFamily = FontFamily.Monospace,
-                            background = Color(0xFF1A1A2E),
-                            color = Color(0xFF8BE9FD)
+                            background = Color.White.copy(alpha = 0.10f),
+                            color = AccentCyan
                         )) {
                             append(" ${text.substring(i + 1, end)} ")
                         }
@@ -2421,7 +3394,7 @@ private fun MarkdownTable(
 
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF141425)),
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.06f)),
         shape = RoundedCornerShape(8.dp)
     ) {
         Column(modifier = Modifier.padding(2.dp)) {
@@ -2431,7 +3404,7 @@ private fun MarkdownTable(
                     modifier = Modifier
                         .fillMaxWidth()
                         .then(
-                            if (isHeader) Modifier.background(AccentCyan.copy(alpha = 0.1f))
+                            if (isHeader) Modifier.background(AccentCyan.copy(alpha = 0.15f))
                             else Modifier
                         )
                         .padding(horizontal = 8.dp, vertical = 6.dp),
@@ -2453,6 +3426,248 @@ private fun MarkdownTable(
                 if (rowIdx < allCells.size - 1) {
                     HorizontalDivider(color = color.copy(alpha = 0.1f))
                 }
+            }
+        }
+    }
+}
+
+// ═══════════════════════════════════════════
+// ── Mermaid Diagram Dialog ──
+// ═══════════════════════════════════════════
+
+@Composable
+private fun MermaidDiagramDialog(
+    mermaidCode: String,
+    onDismiss: () -> Unit,
+    onBitmapCaptured: (ByteArray) -> Unit = {}
+) {
+    var bitmapCaptured by remember { mutableStateOf(false) }
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true
+        )
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.92f),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.08f))
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                // Header with gradient
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            Brush.horizontalGradient(
+                                colors = listOf(Color(0xFF6C63FF), Color(0xFF00BCD4))
+                            )
+                        )
+                        .padding(horizontal = 20.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Rounded.AutoGraph,
+                            null,
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(Modifier.width(10.dp))
+                        Text(
+                            "Visual Diagram",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold
+                            ),
+                            color = Color.White
+                        )
+                    }
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Rounded.Close, "Close", tint = Color.White.copy(alpha = 0.9f))
+                    }
+                }
+
+                // WebView with Mermaid
+                val html = """
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+                        <style>
+                            * { margin: 0; padding: 0; box-sizing: border-box; }
+                            body {
+                                background: #FFFFFF;
+                                display: flex;
+                                justify-content: center;
+                                align-items: flex-start;
+                                min-height: 100vh;
+                                padding: 24px 12px;
+                                overflow: auto;
+                                font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+                            }
+                            #diagram {
+                                width: 100%;
+                                display: flex;
+                                justify-content: center;
+                                min-height: 80vh;
+                            }
+                            .mermaid {
+                                width: 100%;
+                            }
+                            .mermaid svg {
+                                width: 100% !important;
+                                height: auto !important;
+                                min-height: 60vh;
+                            }
+                            /* Professional clean styling */
+                            .node rect, .node polygon {
+                                fill: #F0F4FF !important;
+                                stroke: #3B4C6B !important;
+                                stroke-width: 2px !important;
+                                rx: 10px !important;
+                                ry: 10px !important;
+                                filter: drop-shadow(0px 2px 6px rgba(0,0,0,0.12)) !important;
+                            }
+                            .node .label {
+                                font-size: 16px !important;
+                                font-weight: 600 !important;
+                            }
+                            .nodeLabel {
+                                color: #1A202C !important;
+                                fill: #1A202C !important;
+                                font-size: 16px !important;
+                                font-weight: 600 !important;
+                                font-family: 'Segoe UI', system-ui, sans-serif !important;
+                            }
+                            .edgeLabel {
+                                color: #4A5568 !important;
+                                fill: #4A5568 !important;
+                                font-size: 13px !important;
+                                font-weight: 500 !important;
+                                background-color: #FFFFFF !important;
+                            }
+                            .edgePath .path {
+                                stroke: #2D3748 !important;
+                                stroke-width: 2.5px !important;
+                            }
+                            marker path {
+                                fill: #2D3748 !important;
+                            }
+                            .error-text {
+                                color: #E53E3E;
+                                font-family: monospace;
+                                font-size: 14px;
+                                padding: 20px;
+                                text-align: center;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div id="diagram" class="mermaid">
+                        ${mermaidCode}
+                        </div>
+                        <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+                        <script>
+                            mermaid.initialize({
+                                startOnLoad: true,
+                                theme: 'base',
+                                themeVariables: {
+                                    primaryColor: '#F0F4FF',
+                                    primaryTextColor: '#1A202C',
+                                    primaryBorderColor: '#3B4C6B',
+                                    lineColor: '#2D3748',
+                                    secondaryColor: '#EDF2F7',
+                                    tertiaryColor: '#FFFFFF',
+                                    fontFamily: 'Segoe UI, system-ui, sans-serif',
+                                    fontSize: '16px',
+                                    nodeBorder: '#3B4C6B',
+                                    mainBkg: '#F0F4FF',
+                                    nodeTextColor: '#1A202C'
+                                },
+                                flowchart: {
+                                    useMaxWidth: true,
+                                    htmlLabels: true,
+                                    curve: 'basis',
+                                    padding: 20,
+                                    nodeSpacing: 50,
+                                    rankSpacing: 60,
+                                    diagramPadding: 20
+                                }
+                            });
+                            mermaid.parseError = function(err, hash) {
+                                var msg = (typeof err === 'string') ? err : (err.message || err.str || JSON.stringify(err));
+                                document.getElementById('diagram').innerHTML =
+                                    '<p class="error-text">⚠️ Diagram syntax error<br>' + msg + '</p>';
+                            };
+                        </script>
+                    </body>
+                    </html>
+                """.trimIndent()
+
+                AndroidView(
+                    factory = { ctx ->
+                        WebView(ctx).apply {
+                            settings.javaScriptEnabled = true
+                            settings.domStorageEnabled = true
+                            settings.builtInZoomControls = true
+                            settings.displayZoomControls = false
+                            settings.useWideViewPort = true
+                            settings.loadWithOverviewMode = true
+                            settings.setSupportZoom(true)
+                            setBackgroundColor(android.graphics.Color.WHITE)
+                            webViewClient = object : WebViewClient() {
+                                override fun onPageFinished(view: WebView?, url: String?) {
+                                    super.onPageFinished(view, url)
+                                    // Wait for Mermaid to render, then capture bitmap
+                                    view?.postDelayed({
+                                        if (!bitmapCaptured) {
+                                            try {
+                                                val w = view.width
+                                                val h = view.contentHeight
+                                                if (w > 0 && h > 0) {
+                                                    val bitmap = android.graphics.Bitmap.createBitmap(
+                                                        w, minOf(h, 2000),
+                                                        android.graphics.Bitmap.Config.ARGB_8888
+                                                    )
+                                                    val canvas = android.graphics.Canvas(bitmap)
+                                                    canvas.drawColor(android.graphics.Color.WHITE)
+                                                    view.draw(canvas)
+                                                    val baos = java.io.ByteArrayOutputStream()
+                                                    bitmap.compress(
+                                                        android.graphics.Bitmap.CompressFormat.PNG, 90, baos
+                                                    )
+                                                    bitmap.recycle()
+                                                    val bytes = baos.toByteArray()
+                                                    if (bytes.size > 1000) {
+                                                        onBitmapCaptured(bytes)
+                                                        bitmapCaptured = true
+                                                    }
+                                                }
+                                            } catch (e: Exception) {
+                                                android.util.Log.w("Diagram", "Bitmap capture failed: ${e.message}")
+                                            }
+                                        }
+                                    }, 3000)  // 3s delay for Mermaid JS to render
+                                }
+                            }
+                            loadDataWithBaseURL(
+                                "https://cdn.jsdelivr.net",
+                                html,
+                                "text/html",
+                                "UTF-8",
+                                null
+                            )
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(8.dp)
+                )
             }
         }
     }

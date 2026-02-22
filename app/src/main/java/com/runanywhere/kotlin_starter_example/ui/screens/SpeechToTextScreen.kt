@@ -8,6 +8,7 @@ import android.media.MediaRecorder
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -25,10 +26,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.runanywhere.kotlin_starter_example.R
 import com.runanywhere.kotlin_starter_example.services.ModelService
 import com.runanywhere.kotlin_starter_example.ui.components.ModelLoaderWidget
 import com.runanywhere.kotlin_starter_example.ui.theme.*
@@ -44,19 +48,19 @@ private class AudioRecorder {
     private var audioRecord: AudioRecord? = null
     private var isRecording = false
     private val audioData = ByteArrayOutputStream()
-    
+
     companion object {
         const val SAMPLE_RATE = 16000 // 16kHz for STT
         const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
         const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
     }
-    
+
     fun startRecording(): Boolean {
         val bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT)
         if (bufferSize == AudioRecord.ERROR || bufferSize == AudioRecord.ERROR_BAD_VALUE) {
             return false
         }
-        
+
         try {
             audioRecord = AudioRecord(
                 MediaRecorder.AudioSource.MIC,
@@ -65,15 +69,15 @@ private class AudioRecorder {
                 AUDIO_FORMAT,
                 bufferSize * 2
             )
-            
+
             if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) {
                 return false
             }
-            
+
             audioData.reset()
             audioRecord?.startRecording()
             isRecording = true
-            
+
             // Start reading audio in a thread
             Thread {
                 val buffer = ByteArray(bufferSize)
@@ -86,19 +90,19 @@ private class AudioRecorder {
                     }
                 }
             }.start()
-            
+
             return true
         } catch (e: SecurityException) {
             return false
         }
     }
-    
+
     fun stopRecording(): ByteArray {
         isRecording = false
         audioRecord?.stop()
         audioRecord?.release()
         audioRecord = null
-        
+
         synchronized(audioData) {
             return audioData.toByteArray()
         }
@@ -117,13 +121,13 @@ fun SpeechToTextScreen(
     var transcription by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var hasPermission by remember { mutableStateOf(false) }
-    
+
     // Audio recorder instance
     val audioRecorder = remember { AudioRecorder() }
-    
+
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    
+
     // Check permission
     LaunchedEffect(Unit) {
         hasPermission = ContextCompat.checkSelfPermission(
@@ -131,7 +135,7 @@ fun SpeechToTextScreen(
             Manifest.permission.RECORD_AUDIO
         ) == PackageManager.PERMISSION_GRANTED
     }
-    
+
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -140,7 +144,15 @@ fun SpeechToTextScreen(
             errorMessage = "Microphone permission is required for speech recognition"
         }
     }
-    
+
+    Box(modifier = Modifier.fillMaxSize()) {
+    Image(
+        painter = painterResource(id = R.drawable.app_background),
+        contentDescription = null,
+        modifier = Modifier.fillMaxSize(),
+        contentScale = ContentScale.Crop
+    )
+    Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)))
     Scaffold(
         topBar = {
             TopAppBar(
@@ -151,11 +163,11 @@ fun SpeechToTextScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = PrimaryDark
+                    containerColor = GlassWhite
                 )
             )
         },
-        containerColor = PrimaryDark
+        containerColor = Color.Transparent
     ) { padding ->
         Column(
             modifier = modifier
@@ -177,7 +189,7 @@ fun SpeechToTextScreen(
                 )
                 Spacer(modifier = Modifier.height(24.dp))
             }
-            
+
             // Permission check
             if (!hasPermission) {
                 Card(
@@ -210,9 +222,9 @@ fun SpeechToTextScreen(
                 }
                 Spacer(modifier = Modifier.height(24.dp))
             }
-            
+
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             // Recording button with animation
             if (modelService.isSTTLoaded && hasPermission) {
                 RecordingButton(
@@ -246,17 +258,17 @@ fun SpeechToTextScreen(
                                     val audioData = withContext(Dispatchers.IO) {
                                         audioRecorder.stopRecording()
                                     }
-                                    
+
                                     if (audioData.isEmpty()) {
                                         errorMessage = "No audio recorded"
                                         return@launch
                                     }
-                                    
+
                                     // Transcribe using RunAnywhere SDK
                                     val result = withContext(Dispatchers.IO) {
                                         RunAnywhere.transcribe(audioData)
                                     }
-                                    
+
                                     if (result.isNotBlank()) {
                                         transcription = result
                                         errorMessage = null
@@ -272,9 +284,9 @@ fun SpeechToTextScreen(
                         }
                     }
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 Text(
                     text = when {
                         isRecording -> "Tap to stop recording"
@@ -289,9 +301,9 @@ fun SpeechToTextScreen(
                     }
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             // Transcription result
             if (transcription.isNotEmpty()) {
                 Card(
@@ -320,7 +332,7 @@ fun SpeechToTextScreen(
                     }
                 }
             }
-            
+
             // Error message
             errorMessage?.let { error ->
                 Spacer(modifier = Modifier.height(16.dp))
@@ -339,7 +351,7 @@ fun SpeechToTextScreen(
                     )
                 }
             }
-            
+
             // Info card
             if (modelService.isSTTLoaded && hasPermission) {
                 Spacer(modifier = Modifier.height(32.dp))
@@ -347,6 +359,7 @@ fun SpeechToTextScreen(
             }
         }
     }
+    } // Close Box
 }
 
 @Composable
@@ -365,7 +378,7 @@ private fun RecordingButton(
         ),
         label = "scale"
     )
-    
+
     Box(
         modifier = Modifier.size(120.dp),
         contentAlignment = Alignment.Center
@@ -387,7 +400,7 @@ private fun RecordingButton(
                     )
             )
         }
-        
+
         // Button
         FloatingActionButton(
             onClick = onClick,

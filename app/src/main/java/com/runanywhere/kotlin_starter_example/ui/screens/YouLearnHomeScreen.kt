@@ -2,6 +2,7 @@ package com.runanywhere.kotlin_starter_example.ui.screens
 
 
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,8 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.runanywhere.kotlin_starter_example.R
 import com.runanywhere.kotlin_starter_example.services.ModelService
 import com.runanywhere.kotlin_starter_example.ui.theme.*
 
@@ -33,12 +37,14 @@ fun YouLearnHomeScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(PrimaryDark, Color(0xFF0F1629), PrimaryMid)
-                )
-            )
     ) {
+        Image(
+            painter = painterResource(id = R.drawable.app_background),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)))
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -64,24 +70,14 @@ fun YouLearnHomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Box(
+                Image(
+                    painter = painterResource(id = R.drawable.app_logo),
+                    contentDescription = "YouLearn Logo",
                     modifier = Modifier
                         .size(88.dp)
-                        .clip(RoundedCornerShape(28.dp))
-                        .background(
-                            brush = Brush.linearGradient(
-                                colors = listOf(AccentViolet, AccentCyan)
-                            )
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Rounded.School,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(48.dp)
-                    )
-                }
+                        .clip(RoundedCornerShape(28.dp)),
+                    contentScale = ContentScale.Crop
+                )
 
                 Spacer(Modifier.height(20.dp))
 
@@ -135,7 +131,7 @@ fun YouLearnHomeScreen(
                     .fillMaxWidth()
                     .height(64.dp),
                 shape = RoundedCornerShape(18.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = AccentViolet)
+                colors = ButtonDefaults.buttonColors(containerColor = AccentCyan)
             ) {
                 Icon(Icons.Rounded.Add, null, modifier = Modifier.size(24.dp))
                 Spacer(Modifier.width(12.dp))
@@ -171,9 +167,9 @@ fun YouLearnHomeScreen(
             )
             Spacer(Modifier.height(4.dp))
 
-            val allLoaded = modelService.isLLMLoaded && modelService.isSTTLoaded && modelService.isTTSLoaded
+            val allLoaded = modelService.isLLMLoaded
             Text(
-                text = if (allLoaded) "All models ready" else "Some models need loading",
+                text = if (allLoaded) "All models ready" else "LLM needs loading",
                 style = MaterialTheme.typography.bodySmall,
                 color = if (allLoaded) AccentGreen else TextMuted
             )
@@ -181,7 +177,7 @@ fun YouLearnHomeScreen(
 
             Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = SurfaceCard.copy(alpha = 0.6f))
+                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.08f))
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     // LLM status
@@ -236,15 +232,12 @@ fun YouLearnHomeScreen(
                         Spacer(Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text("STT", style = MaterialTheme.typography.labelMedium, color = AccentViolet)
-                            Text("Whisper Tiny", style = MaterialTheme.typography.bodySmall, color = TextPrimary)
+                            Text("Android Built-in", style = MaterialTheme.typography.bodySmall, color = TextPrimary)
                         }
                         Text(
-                            if (modelService.isSTTLoaded) "Ready"
-                            else if (modelService.isSTTDownloading) "${(modelService.sttDownloadProgress * 100).toInt()}%"
-                            else if (modelService.isSTTLoading) "Loading..."
-                            else "Not loaded",
+                            "Ready",
                             style = MaterialTheme.typography.labelSmall,
-                            color = if (modelService.isSTTLoaded) AccentGreen else if (modelService.isSTTDownloading || modelService.isSTTLoading) AccentViolet else TextMuted
+                            color = AccentGreen
                         )
                     }
 
@@ -267,15 +260,12 @@ fun YouLearnHomeScreen(
                         Spacer(Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text("TTS", style = MaterialTheme.typography.labelMedium, color = AccentPink)
-                            Text("Piper English", style = MaterialTheme.typography.bodySmall, color = TextPrimary)
+                            Text("Android Built-in", style = MaterialTheme.typography.bodySmall, color = TextPrimary)
                         }
                         Text(
-                            if (modelService.isTTSLoaded) "Ready"
-                            else if (modelService.isTTSDownloading) "${(modelService.ttsDownloadProgress * 100).toInt()}%"
-                            else if (modelService.isTTSLoading) "Loading..."
-                            else "Not loaded",
+                            "Ready",
                             style = MaterialTheme.typography.labelSmall,
-                            color = if (modelService.isTTSLoaded) AccentGreen else if (modelService.isTTSDownloading || modelService.isTTSLoading) AccentPink else TextMuted
+                            color = AccentGreen
                         )
                     }
                 }
@@ -288,9 +278,7 @@ fun YouLearnHomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 if (!allLoaded) {
-                    val anyBusy = modelService.isLLMDownloading || modelService.isLLMLoading ||
-                            modelService.isSTTDownloading || modelService.isSTTLoading ||
-                            modelService.isTTSDownloading || modelService.isTTSLoading
+                    val anyBusy = modelService.isLLMDownloading || modelService.isLLMLoading
                     FilledTonalButton(
                         onClick = { modelService.downloadAndLoadAllModels() },
                         enabled = !anyBusy,
@@ -362,7 +350,7 @@ fun YouLearnHomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = SurfaceCard.copy(alpha = 0.5f)
+                    containerColor = Color.White.copy(alpha = 0.08f)
                 )
             ) {
                 Row(

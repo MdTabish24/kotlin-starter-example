@@ -1,5 +1,6 @@
 package com.runanywhere.kotlin_starter_example.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,12 +16,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.runanywhere.kotlin_starter_example.data.SessionRepository
 import com.runanywhere.kotlin_starter_example.data.StudySession
+import com.runanywhere.kotlin_starter_example.R
 import com.runanywhere.kotlin_starter_example.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -37,6 +41,14 @@ fun SessionHistoryScreen(
     var sessions by remember { mutableStateOf(repository.getAll()) }
     var showDeleteDialog by remember { mutableStateOf<StudySession?>(null) }
 
+    Box(modifier = Modifier.fillMaxSize()) {
+    Image(
+        painter = painterResource(id = R.drawable.app_background),
+        contentDescription = null,
+        modifier = Modifier.fillMaxSize(),
+        contentScale = ContentScale.Crop
+    )
+    Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)))
     Scaffold(
         topBar = {
             TopAppBar(
@@ -46,10 +58,10 @@ fun SessionHistoryScreen(
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = PrimaryDark)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = GlassWhite)
             )
         },
-        containerColor = PrimaryDark
+        containerColor = Color.Transparent
     ) { padding ->
         if (sessions.isEmpty()) {
             // Empty state
@@ -129,10 +141,13 @@ fun SessionHistoryScreen(
                     Text("Cancel", color = AccentCyan)
                 }
             },
-            containerColor = SurfaceCard,
-            shape = RoundedCornerShape(20.dp)
+            containerColor = Color(0xFF0D1117),
+            shape = RoundedCornerShape(24.dp),
+            titleContentColor = TextPrimary,
+            textContentColor = TextMuted
         )
     }
+    } // Close Box
 }
 
 @Composable
@@ -147,7 +162,8 @@ private fun SessionCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceCard.copy(alpha = 0.6f))
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.08f)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, GlassBorder)
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
             Row(

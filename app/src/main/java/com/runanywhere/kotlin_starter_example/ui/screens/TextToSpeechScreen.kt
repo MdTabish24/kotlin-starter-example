@@ -4,6 +4,7 @@ import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -20,8 +21,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.runanywhere.kotlin_starter_example.R
 import com.runanywhere.kotlin_starter_example.services.ModelService
 import com.runanywhere.kotlin_starter_example.ui.components.ModelLoaderWidget
 import com.runanywhere.kotlin_starter_example.ui.theme.*
@@ -40,9 +44,9 @@ import java.nio.ByteOrder
 private suspend fun playWavAudio(wavData: ByteArray) = withContext(Dispatchers.IO) {
     // Parse WAV header to get audio parameters
     if (wavData.size < 44) return@withContext // Invalid WAV
-    
+
     val buffer = ByteBuffer.wrap(wavData).order(ByteOrder.LITTLE_ENDIAN)
-    
+
     // Skip RIFF header (12 bytes) and fmt chunk header (8 bytes) = 20 bytes
     buffer.position(20)
     val audioFormat = buffer.short.toInt() // Should be 1 for PCM
@@ -51,7 +55,7 @@ private suspend fun playWavAudio(wavData: ByteArray) = withContext(Dispatchers.I
     buffer.int // byteRate
     buffer.short // blockAlign
     val bitsPerSample = buffer.short.toInt()
-    
+
     // Find data chunk
     var dataOffset = 36
     while (dataOffset < wavData.size - 8) {
@@ -64,23 +68,23 @@ private suspend fun playWavAudio(wavData: ByteArray) = withContext(Dispatchers.I
         dataOffset++
     }
     dataOffset += 8 // Skip "data" and size
-    
+
     if (dataOffset >= wavData.size) return@withContext
-    
+
     val pcmData = wavData.copyOfRange(dataOffset, wavData.size)
-    
-    val channelConfig = if (numChannels == 1) 
-        AudioFormat.CHANNEL_OUT_MONO 
-    else 
+
+    val channelConfig = if (numChannels == 1)
+        AudioFormat.CHANNEL_OUT_MONO
+    else
         AudioFormat.CHANNEL_OUT_STEREO
-        
-    val audioFormatConfig = if (bitsPerSample == 16) 
-        AudioFormat.ENCODING_PCM_16BIT 
-    else 
+
+    val audioFormatConfig = if (bitsPerSample == 16)
+        AudioFormat.ENCODING_PCM_16BIT
+    else
         AudioFormat.ENCODING_PCM_8BIT
-    
+
     val minBufferSize = AudioTrack.getMinBufferSize(sampleRate, channelConfig, audioFormatConfig)
-    
+
     val audioTrack = AudioTrack.Builder()
         .setAudioAttributes(
             AudioAttributes.Builder()
@@ -98,14 +102,14 @@ private suspend fun playWavAudio(wavData: ByteArray) = withContext(Dispatchers.I
         .setBufferSizeInBytes(maxOf(minBufferSize, pcmData.size))
         .setTransferMode(AudioTrack.MODE_STATIC)
         .build()
-    
+
     audioTrack.write(pcmData, 0, pcmData.size)
     audioTrack.play()
-    
+
     // Wait for playback to complete
     val durationMs = (pcmData.size.toLong() * 1000) / (sampleRate * numChannels * (bitsPerSample / 8))
     Thread.sleep(durationMs + 100) // Add small buffer
-    
+
     audioTrack.stop()
     audioTrack.release()
 }
@@ -120,9 +124,17 @@ fun TextToSpeechScreen(
     var inputText by remember { mutableStateOf("Hello! This is a test of the text-to-speech system.") }
     var isSpeaking by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    
+
     val scope = rememberCoroutineScope()
-    
+
+    Box(modifier = Modifier.fillMaxSize()) {
+    Image(
+        painter = painterResource(id = R.drawable.app_background),
+        contentDescription = null,
+        modifier = Modifier.fillMaxSize(),
+        contentScale = ContentScale.Crop
+    )
+    Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)))
     Scaffold(
         topBar = {
             TopAppBar(
@@ -133,11 +145,11 @@ fun TextToSpeechScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = PrimaryDark
+                    containerColor = GlassWhite
                 )
             )
         },
-        containerColor = PrimaryDark
+        containerColor = Color.Transparent
     ) { padding ->
         Column(
             modifier = modifier
@@ -159,7 +171,7 @@ fun TextToSpeechScreen(
                 )
                 Spacer(modifier = Modifier.height(24.dp))
             }
-            
+
             // Text input
             if (modelService.isTTSLoaded) {
                 Card(
@@ -199,9 +211,9 @@ fun TextToSpeechScreen(
                         )
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(32.dp))
-                
+
                 // Speak button with animation
                 SpeakButton(
                     isSpeaking = isSpeaking,
@@ -214,10 +226,10 @@ fun TextToSpeechScreen(
                                     val output = withContext(Dispatchers.IO) {
                                         RunAnywhere.synthesize(inputText, TTSOptions())
                                     }
-                                    
+
                                     // Play the synthesized audio
                                     playWavAudio(output.audioData)
-                                    
+
                                     errorMessage = null
                                 } catch (e: Exception) {
                                     errorMessage = "TTS failed: ${e.message}"
@@ -228,16 +240,16 @@ fun TextToSpeechScreen(
                         }
                     }
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 Text(
                     text = if (isSpeaking) "Speaking..." else "Tap to speak",
                     style = MaterialTheme.typography.bodyLarge,
                     color = if (isSpeaking) AccentPink else TextMuted
                 )
             }
-            
+
             // Error message
             errorMessage?.let { error ->
                 Spacer(modifier = Modifier.height(16.dp))
@@ -256,19 +268,20 @@ fun TextToSpeechScreen(
                     )
                 }
             }
-            
+
             // Sample texts
             if (modelService.isTTSLoaded) {
                 Spacer(modifier = Modifier.height(32.dp))
                 SampleTextsCard { sampleText ->
                     inputText = sampleText
                 }
-                
+
                 Spacer(modifier = Modifier.height(24.dp))
                 InfoCard()
             }
         }
     }
+    } // Close Box
 }
 
 @Composable
@@ -286,7 +299,7 @@ private fun SpeakButton(
         ),
         label = "scale"
     )
-    
+
     Box(
         modifier = Modifier.size(120.dp),
         contentAlignment = Alignment.Center
@@ -308,7 +321,7 @@ private fun SpeakButton(
                     )
             )
         }
-        
+
         // Button
         FloatingActionButton(
             onClick = onClick,
@@ -345,14 +358,14 @@ private fun SampleTextsCard(onSelectSample: (String) -> Unit) {
                 color = TextPrimary
             )
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             val samples = listOf(
                 "Hello! This is a test of the text-to-speech system.",
                 "The quick brown fox jumps over the lazy dog.",
                 "Artificial intelligence is transforming how we interact with technology.",
                 "Welcome to the future of on-device AI processing."
             )
-            
+
             samples.forEach { sample ->
                 TextButton(
                     onClick = { onSelectSample(sample) },

@@ -97,11 +97,11 @@ object DocumentReader {
         var pdfReader: com.itextpdf.kernel.pdf.PdfReader? = null
         var pdfDoc: com.itextpdf.kernel.pdf.PdfDocument? = null
         var inputStream: InputStream? = null
-        
+
         return try {
             inputStream = context.contentResolver.openInputStream(uri)
             if (inputStream == null) return null
-            
+
             pdfReader = com.itextpdf.kernel.pdf.PdfReader(inputStream)
             pdfDoc = com.itextpdf.kernel.pdf.PdfDocument(pdfReader)
             val sb = StringBuilder()
@@ -172,6 +172,13 @@ object DocumentReader {
 
             renderer.close()
             parcelFileDescriptor.close()
+            // CRITICAL: Close TextRecognizer to free TFLite native memory
+            // (XNNPACK delegates, interpreter pools, OCR model weights = ~50-70MB)
+            recognizer.close()
+            // Force GC to reclaim the native memory immediately
+            System.gc()
+            System.runFinalization()
+            Log.d(TAG, "OCR complete, TextRecognizer closed. Native heap: ${android.os.Debug.getNativeHeapAllocatedSize() / (1024*1024)}MB")
             cleanExtractedText(sb.toString())
         } catch (e: Exception) {
             Log.e(TAG, "PDF OCR failed: ${e.message}", e)
@@ -307,6 +314,9 @@ object DocumentReader {
 
             val result = recognizer.process(image).await()
             bitmap.recycle()
+            // CRITICAL: Close TextRecognizer to free TFLite native memory
+            recognizer.close()
+            System.gc()
 
             if (result.text.isNotBlank()) {
                 Log.d(TAG, "OCR extracted: ${result.text.length} chars")

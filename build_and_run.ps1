@@ -1,5 +1,5 @@
 # ============================================================
-#  YouLearn - Build, Install & Monitor
+#  YouLearn - Build, Install & Monitor (CLEAN LOGS)
 # ============================================================
 $ErrorActionPreference = "SilentlyContinue"
 $Host.UI.RawUI.WindowTitle = "YouLearn Build"
@@ -117,90 +117,159 @@ Start-Sleep -Seconds 1
 Write-Host "        App launched!" -ForegroundColor Green
 Write-Host ""
 
-# ── 5. Live Monitor ──
-Write-Host "  [5/5] Starting live monitor..." -ForegroundColor Cyan
+# ── 5. Live Monitor (CLEAN — only crash-relevant logs) ──
+Write-Host "  [5/5] Starting crash monitor..." -ForegroundColor Cyan
 Start-Sleep -Seconds 2
 $appPid = (& $ADB shell pidof $PKG 2>$null).Trim()
-
 $pidDisplay = if ($appPid) { $appPid } else { "unknown" }
 
 Write-Host ""
-Write-Host "  ----------------------------------------" -ForegroundColor DarkCyan
-Write-Host "    LIVE APP MONITOR" -ForegroundColor Cyan
+Write-Host "  ========================================" -ForegroundColor DarkCyan
+Write-Host "    CRASH MONITOR (clean logs only)" -ForegroundColor Cyan
 Write-Host "    PID: $pidDisplay" -ForegroundColor Gray
-Write-Host "    Shows: ALL app logs + crashes" -ForegroundColor DarkGray
-Write-Host "    Saves errors to: errors.txt" -ForegroundColor DarkGray
 Write-Host "    Press Ctrl+C to stop" -ForegroundColor DarkGray
-Write-Host "  ----------------------------------------" -ForegroundColor DarkCyan
+Write-Host "  ========================================" -ForegroundColor DarkCyan
 Write-Host ""
 
 & $ADB logcat -c 2>$null
 Add-Content -Path $ERR -Value "`n── RUNTIME LOGS ──"
-Add-Content -Path $ERR -Value "Started: $timestamp"
 Add-Content -Path $ERR -Value "App PID: $pidDisplay`n"
 
 $crashDetected = $false
+$crashDumpMode = $false   # When true, capture ALL lines (crash backtrace from debuggerd)
+$crashDumpLines = 0       # Count lines captured in crash dump mode
+
+# ── NOISE FILTER: skip these tags/patterns entirely ──
+# These produce 80%+ of the log spam and are NEVER relevant to crashes
+$noisePattern = "^.*(Choreographer|ViewRootImpl|OpenGLRenderer|SurfaceFlinger|InputMethodManager|ImeTracker|InsetsController|HandWritingStubImpl|WindowOnBackDispatcher|CompatibilityChangeReporter|MiuiMultiWindowUtils|IS_CTS_MODE|MULTI_WINDOW_SWITCH_ENABLED|AppScoutStateMachine|ProfileInstaller|ForceDarkHelperStubImpl|MirrorManager|FileUtils|BinderMonitor|TransportRuntime|DynamiteModule|DecoupledTextDelegate|PipelineManager|tflite |native  |Manager |ServerFlag|nativeloader|ApkAssets|TextToSpeech|RemoteInputConnectionImpl|ActivityThread).*$"
+
+# ── OUR APP TAGS: these are the ones that matter ──
+$appTagPattern = "ModelService|LLMBooster|LLMBoost|BridgeGen|DocumentReader|AccentTTS|AndroidSTT|SmartDocSearch"
+
+# ── SDK TAGS: RunAnywhere internals ──
+$sdkTagPattern = "RACCommonsJNI|CppBridgeLLM|CppBridgeState|CppBridgeTelemetry"
+
+# ── CRASH SIGNATURES ──
+$crashPattern = "FATAL|Fatal signal|SIGABRT|SIGSEGV|SIGILL|SIGFPE|SIGBUS|native crash|tombstone|Abort message|backtrace:|#\d+\s+pc|Build fingerprint|AndroidRuntime|GGML_ABORT|ggml_abort|ggml_assert|OutOfMemory|NativeAlloc|CRASH-DIAG"
 
 if ($appPid) {
-    # PID-based filtering: shows ALL logs from our app + FULL CRASH DUMPS
-    & $ADB logcat -v time --pid=$appPid 2>&1 | ForEach-Object {
+    # Use DUAL monitoring: PID-filtered for clean app logs + crash_dump process for backtraces
+    # The --pid filter HIDES crash dumps because debuggerd runs as a separate process.
+    # So we use a broader filter that includes both our PID and crash-related tags from any PID.
+    & $ADB logcat -v time 2>&1 | ForEach-Object {
         $line = $_.ToString()
-        if (-not $line) { return }
+        if (-not $line -or $line.Length -lt 5) { return }
 
-        # CRITICAL: Capture native crashes with full stack trace
-        if ($line -match "FATAL|AndroidRuntime|CRASH|signal|SIGABRT|SIGSEGV|SIGILL|native crash|tombstone|DEBUG\s+:|backtrace:|#\d+\s+pc|Build fingerprint|Abort message|Cause:") {
-            Write-Host "  [FATAL] $line" -ForegroundColor Red
-            Add-Content -Path $ERR -Value "[FATAL] $line"
-            $crashDetected = $true
-        }
-        # Capture all errors including native library errors
-        elseif ($line -match " E[/ ]|Error|Exception|abort|librac_|librunanywhere|NativeAlloc|OutOfMemory") {
-            Write-Host "  [ERROR] $line" -ForegroundColor Red
-            Add-Content -Path $ERR -Value "[ERROR] $line"
-        }
-        elseif ($line -match " W[/ ]|Warning|warn|WaitForGcToComplete") {
-            Write-Host "  [WARN]  $line" -ForegroundColor Yellow
-            Add-Content -Path $ERR -Value "[WARN] $line"
-        }
-        elseif ($line -match "ModelService|RunAnywhere|STT|TTS|LLM|download|load|transcri|synthes|generate|KV cache|Native heap") {
-            Write-Host "  [AI]    $line" -ForegroundColor Magenta
-            # Log AI operations to file too for debugging
-            Add-Content -Path $ERR -Value "[AI] $line"
-        }
-        elseif ($line -match " I[/ ]") {
-            Write-Host "  [INFO]  $line" -ForegroundColor Gray
-        }
-        else {
-            Write-Host "  [DBG]   $line" -ForegroundColor DarkGray
-        }
-    }
-} else {
-    # Fallback: tag-based filtering with enhanced crash detection
-    Write-Host "  [!] Could not get PID, using enhanced tag filter" -ForegroundColor Yellow
-    Write-Host ""
+        # Check if this log line is from OUR process or from crash_dump/debuggerd
+        $isOurPid = $line -match "\(\s*$appPid\)" -or $line -match "pid $appPid"
+        $isCrashDump = $line -match "DEBUG\s*\(|crash_dump|debuggerd|pid:\s*$appPid|>>> $PKG|signal \d+.*pid $appPid"
 
-    $noisePattern = "Looper|ViewRootImpl|Choreographer|OpenGLRenderer|gralloc|SurfaceFlinger|hwcomposer|InputDispatcher|InputMethodManager|StatusBar|SystemUI|Zygote"
+        # In crash dump mode: scan up to 500 total lines for the backtrace from debuggerd
+        # debuggerd runs as a separate process, so its output comes AFTER the SIGABRT line
+        if ($crashDumpMode) {
+            $crashDumpLines++
+            if ($crashDumpLines -gt 500) {
+                $crashDumpMode = $false
+                Write-Host "  [CRASH] ── end crash dump capture ──" -ForegroundColor DarkRed
+                return
+            }
+            # Show lines from DEBUG tag (crash dump) or containing crash keywords
+            if ($line -match "F/DEBUG|crash_dump|>>> |backtrace:|#\d+\s+pc|Abort message|signal \d+|GGML|ggml|abort|librac_|llamacpp|Cause:|memory.map|pid:\s*$appPid|Build fingerprint|ABI:|Cmdline:") {
+                Write-Host "  [CRASH] $line" -ForegroundColor Red -BackgroundColor Black
+                Add-Content -Path $ERR -Value "[CRASH] $line"
+            }
+            return
+        }
 
-    # Enhanced filter to catch native crashes
-    & $ADB logcat -v time "ModelService:V" "YouLearn:V" "RunAnywhere:V" "runanywhere:V" "AndroidRuntime:E" "System.err:W" "ActivityManager:I" "DEBUG:I" "libc:E" "*:F" "*:S" 2>&1 | ForEach-Object {
-        $line = $_.ToString()
-        if (-not $line) { return }
+        # Only process lines from our PID OR crash-related lines mentioning our PID/package
+        if (-not $isOurPid -and -not $isCrashDump) { return }
+
+        # ── 1. ALWAYS skip noise (biggest filter — removes 80% of spam) ──
         if ($line -match $noisePattern) { return }
 
-        if ($line -match "FATAL|AndroidRuntime|CRASH|signal|SIGABRT|SIGSEGV|native crash|tombstone|DEBUG\s+:") {
-            Write-Host "  [FATAL] $line" -ForegroundColor Red
-            Add-Content -Path $ERR -Value "[FATAL] $line"
+        # ── 2. CRASH: highest priority — always show with full detail ──
+        if ($line -match $crashPattern) {
+            Write-Host "  [CRASH] $line" -ForegroundColor Red -BackgroundColor Black
+            Add-Content -Path $ERR -Value "[CRASH] $line"
+            $crashDetected = $true
+            # Enter crash dump mode to capture backtrace from debuggerd (different PID)
+            if ($line -match "Fatal signal|SIGABRT|SIGSEGV") {
+                $crashDumpMode = $true
+                $crashDumpLines = 0
+            }
+            return
         }
-        elseif ($line -match " E[/ ]|Error|Exception|abort|librac_|NativeAlloc") {
-            Write-Host "  [ERROR] $line" -ForegroundColor Red
-            Add-Content -Path $ERR -Value "[ERROR] $line"
+
+        # ── 3. OUR APP LOGS: ModelService, BridgeGen, LLMBoost, etc. ──
+        if ($line -match $appTagPattern) {
+            # Error level from our code
+            if ($line -match " E[/ ]|Error|Exception|failed|FAIL") {
+                Write-Host "  [APP-ERR] $line" -ForegroundColor Red
+                Add-Content -Path $ERR -Value "[APP-ERR] $line"
+            } else {
+                Write-Host "  [APP]     $line" -ForegroundColor Green
+                Add-Content -Path $ERR -Value "[APP] $line"
+            }
+            return
         }
-        elseif ($line -match " W[/ ]|Warning|warn") {
-            Write-Host "  [WARN]  $line" -ForegroundColor Yellow
-            Add-Content -Path $ERR -Value "[WARN] $line"
+
+        # ── 4. SDK LOGS: RunAnywhere/llama.cpp internals ──
+        if ($line -match $sdkTagPattern) {
+            # Only show SDK errors, load/generate events, state changes (skip telemetry spam)
+            if ($line -match "Telemetry|telemetry|apikey|supabase") { return }
+            if ($line -match "error|Error|fail|FAIL| E[/ ]") {
+                Write-Host "  [SDK-ERR] $line" -ForegroundColor Yellow
+                Add-Content -Path $ERR -Value "[SDK-ERR] $line"
+            } elseif ($line -match "State changed|loaded|Loading|generate|READY|GENERATING") {
+                Write-Host "  [SDK]     $line" -ForegroundColor Cyan
+                Add-Content -Path $ERR -Value "[SDK] $line"
+            }
+            return
+        }
+
+        # ── 5. NATIVE MEMORY: critical for diagnosing SIGABRT ──
+        if ($line -match "Native heap|native heap|NativeHeap|getNativeHeap|mmap|munmap|malloc|alloc.*fail") {
+            Write-Host "  [MEM]     $line" -ForegroundColor Magenta
+            Add-Content -Path $ERR -Value "[MEM] $line"
+            return
+        }
+
+        # ── 6. GC EVENTS: show only on 6GB to track memory pressure ──
+        if ($line -match "GC freed|concurrent copying GC|WaitForGcToComplete") {
+            Write-Host "  [GC]      $line" -ForegroundColor DarkGray
+            return
+        }
+
+        # ── 7. GENERIC ERRORS from any source ──
+        if ($line -match " E[/ ]|Exception|OutOfMemory|abort|ABORT") {
+            Write-Host "  [ERR]     $line" -ForegroundColor Red
+            Add-Content -Path $ERR -Value "[ERR] $line"
+            return
+        }
+
+        # ── Everything else: DROPPED (not shown, not saved) ──
+    }
+} else {
+    # Fallback: tag-based filtering — only our tags + crashes
+    Write-Host "  [!] Could not get PID, using tag filter" -ForegroundColor Yellow
+    Write-Host ""
+
+    & $ADB logcat -v time "ModelService:V" "LLMBooster:V" "LLMBoost:V" "BridgeGen:V" "DocumentReader:V" "AccentTTS:V" "AndroidSTT:V" "SmartDocSearch:V" "RACCommonsJNI:V" "CppBridgeLLM:V" "CppBridgeState:V" "AndroidRuntime:E" "DEBUG:I" "libc:F" "*:S" 2>&1 | ForEach-Object {
+        $line = $_.ToString()
+        if (-not $line) { return }
+
+        if ($line -match $crashPattern) {
+            Write-Host "  [CRASH] $line" -ForegroundColor Red -BackgroundColor Black
+            Add-Content -Path $ERR -Value "[CRASH] $line"
+            $crashDetected = $true
+        }
+        elseif ($line -match " E[/ ]|Error|Exception|fail") {
+            Write-Host "  [ERR]   $line" -ForegroundColor Red
+            Add-Content -Path $ERR -Value "[ERR] $line"
         }
         else {
             Write-Host "  [LOG]   $line" -ForegroundColor Gray
+            Add-Content -Path $ERR -Value "[LOG] $line"
         }
     }
 }
@@ -212,9 +281,9 @@ if ($crashDetected) {
     Write-Host "    CRASH DETECTED! Fetching details..." -ForegroundColor Red
     Write-Host "  ========================================" -ForegroundColor Red
     Start-Sleep -Seconds 2
-    
+
     Add-Content -Path $ERR -Value "`n`n── CRASH ANALYSIS ──"
-    
+
     # Get latest tombstone
     $tombstones = & $ADB shell "ls -t /data/tombstones/tombstone_* 2>/dev/null | head -1" 2>$null
     if ($tombstones) {
@@ -222,12 +291,12 @@ if ($crashDetected) {
         $tombstoneContent = & $ADB shell "cat $tombstones" 2>$null
         Add-Content -Path $ERR -Value "`nTOMBSTONE FILE: $tombstones`n"
         Add-Content -Path $ERR -Value $tombstoneContent
-        
+
         # Extract key crash info
         $abortMsg = $tombstoneContent | Select-String -Pattern "Abort message:" -Context 0,3
         $signal = $tombstoneContent | Select-String -Pattern "signal \d+" -Context 0,1
         $backtrace = $tombstoneContent | Select-String -Pattern "backtrace:" -Context 0,20
-        
+
         Write-Host ""
         Write-Host "  ── CRASH ROOT CAUSE ──" -ForegroundColor Red
         if ($abortMsg) {
@@ -243,7 +312,7 @@ if ($crashDetected) {
     } else {
         Write-Host "  No tombstone found (may need root access)" -ForegroundColor DarkGray
     }
-    
+
     # Get native heap info
     Write-Host "  Checking native memory state..." -ForegroundColor Cyan
     $meminfo = & $ADB shell "dumpsys meminfo $PKG | grep -A 20 'Native Heap'" 2>$null

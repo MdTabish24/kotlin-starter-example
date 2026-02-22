@@ -1,6 +1,7 @@
 package com.runanywhere.kotlin_starter_example.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,11 +17,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.painterResource
+import com.runanywhere.kotlin_starter_example.R
 import com.runanywhere.kotlin_starter_example.data.AppPreferences
 import com.runanywhere.kotlin_starter_example.services.LLMModelOption
 import com.runanywhere.kotlin_starter_example.services.ModelService
+import com.runanywhere.kotlin_starter_example.utils.AccentTTSManager
 import com.runanywhere.kotlin_starter_example.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,6 +42,9 @@ fun SettingsScreen(
     var ttsSpeed by remember { mutableFloatStateOf(prefs.ttsSpeed) }
     var ttsPitch by remember { mutableFloatStateOf(prefs.ttsPitch) }
     var selectedLanguage by remember { mutableStateOf(prefs.language) }
+    var selectedAccent by remember { mutableStateOf(prefs.ttsAccent) }
+    val accentTTS = remember { AccentTTSManager(context) }
+    DisposableEffect(Unit) { onDispose { accentTTS.shutdown() } }
 
     Scaffold(
         topBar = {
@@ -46,11 +55,22 @@ fun SettingsScreen(
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = PrimaryDark)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = GlassWhite)
             )
         },
-        containerColor = PrimaryDark
+        containerColor = Color.Transparent
     ) { padding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+        Image(
+            painter = painterResource(id = R.drawable.app_background),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)))
         Column(
             modifier = modifier
                 .fillMaxSize()
@@ -81,11 +101,13 @@ fun SettingsScreen(
                         },
                     shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = if (isActive) AccentCyan.copy(alpha = 0.1f) else SurfaceCard.copy(alpha = 0.5f)
+                        containerColor = if (isActive) AccentCyan.copy(alpha = 0.15f) else Color.White.copy(alpha = 0.08f)
                     ),
                     border = if (isActive) {
-                        androidx.compose.foundation.BorderStroke(1.dp, AccentCyan.copy(alpha = 0.4f))
-                    } else null
+                        androidx.compose.foundation.BorderStroke(1.5.dp, AccentCyan.copy(alpha = 0.4f))
+                    } else {
+                        androidx.compose.foundation.BorderStroke(1.dp, GlassBorder)
+                    }
                 ) {
                     Row(
                         modifier = Modifier
@@ -172,113 +194,6 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(20.dp))
 
-            // ═══════════════════════════════════════
-            // STT & TTS MODEL STATUS
-            // ═══════════════════════════════════════
-            Text("Voice Models", style = MaterialTheme.typography.titleMedium, color = TextPrimary)
-            Spacer(Modifier.height(4.dp))
-            Text("Speech recognition & synthesis", style = MaterialTheme.typography.bodySmall, color = TextMuted)
-            Spacer(Modifier.height(16.dp))
-
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = SurfaceCard.copy(alpha = 0.6f))
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    // STT
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(RoundedCornerShape(9.dp))
-                                .background(AccentViolet.copy(alpha = 0.15f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Rounded.Mic, null, tint = AccentViolet, modifier = Modifier.size(20.dp))
-                        }
-                        Spacer(Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Speech-to-Text", style = MaterialTheme.typography.titleSmall, color = TextPrimary)
-                            Text("Whisper Tiny English (~75 MB)", style = MaterialTheme.typography.bodySmall, color = TextMuted)
-                        }
-                        if (modelService.isSTTLoaded) {
-                            Icon(Icons.Rounded.CheckCircle, null, tint = AccentGreen, modifier = Modifier.size(20.dp))
-                        } else if (modelService.isSTTDownloading || modelService.isSTTLoading) {
-                            CircularProgressIndicator(modifier = Modifier.size(20.dp), color = AccentViolet, strokeWidth = 2.dp)
-                        } else {
-                            Button(
-                                onClick = { modelService.downloadAndLoadSTT() },
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = AccentViolet),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
-                            ) {
-                                Text("Load", style = MaterialTheme.typography.labelSmall)
-                            }
-                        }
-                    }
-
-                    // STT progress
-                    AnimatedVisibility(visible = modelService.isSTTDownloading) {
-                        LinearProgressIndicator(
-                            progress = { modelService.sttDownloadProgress },
-                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp).height(3.dp),
-                            color = AccentViolet,
-                            trackColor = AccentViolet.copy(alpha = 0.15f)
-                        )
-                    }
-
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = TextMuted.copy(alpha = 0.08f))
-
-                    // TTS
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(RoundedCornerShape(9.dp))
-                                .background(AccentPink.copy(alpha = 0.15f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Rounded.VolumeUp, null, tint = AccentPink, modifier = Modifier.size(20.dp))
-                        }
-                        Spacer(Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Text-to-Speech", style = MaterialTheme.typography.titleSmall, color = TextPrimary)
-                            Text("Piper US English (~65 MB)", style = MaterialTheme.typography.bodySmall, color = TextMuted)
-                        }
-                        if (modelService.isTTSLoaded) {
-                            Icon(Icons.Rounded.CheckCircle, null, tint = AccentGreen, modifier = Modifier.size(20.dp))
-                        } else if (modelService.isTTSDownloading || modelService.isTTSLoading) {
-                            CircularProgressIndicator(modifier = Modifier.size(20.dp), color = AccentPink, strokeWidth = 2.dp)
-                        } else {
-                            Button(
-                                onClick = { modelService.downloadAndLoadTTS() },
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = AccentPink),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
-                            ) {
-                                Text("Load", style = MaterialTheme.typography.labelSmall)
-                            }
-                        }
-                    }
-
-                    // TTS progress
-                    AnimatedVisibility(visible = modelService.isTTSDownloading) {
-                        LinearProgressIndicator(
-                            progress = { modelService.ttsDownloadProgress },
-                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp).height(3.dp),
-                            color = AccentPink,
-                            trackColor = AccentPink.copy(alpha = 0.15f)
-                        )
-                    }
-                }
-            }
-
             // Error message
             modelService.errorMessage?.let { error ->
                 Spacer(Modifier.height(12.dp))
@@ -315,10 +230,81 @@ fun SettingsScreen(
             Spacer(Modifier.height(16.dp))
 
             Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = SurfaceCard.copy(alpha = 0.6f))
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.08f)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, GlassBorder)
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
+
+                    // ── Voice Accent ──
+                    Text("Voice Accent", style = MaterialTheme.typography.titleSmall, color = TextPrimary)
+                    Spacer(Modifier.height(4.dp))
+                    Text("Choose how the AI sounds when speaking", style = MaterialTheme.typography.bodySmall, color = TextMuted)
+                    Spacer(Modifier.height(12.dp))
+
+                    AccentTTSManager.ACCENTS.forEachIndexed { index, accent ->
+                        val isSelected = selectedAccent == accent.id
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (isSelected) AccentCyan.copy(alpha = 0.15f) else Color.Transparent)
+                                .clickable {
+                                    selectedAccent = accent.id
+                                    prefs.ttsAccent = accent.id
+                                }
+                                .padding(horizontal = 8.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(accent.flag, style = MaterialTheme.typography.titleMedium)
+                            Spacer(Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    accent.name,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (isSelected) AccentCyan else TextPrimary
+                                )
+                            }
+                            if (isSelected) {
+                                // Preview button
+                                IconButton(
+                                    onClick = {
+                                        accentTTS.speakAsync(
+                                            "Hello! I am your AI study companion.",
+                                            accent.id, ttsSpeed, ttsPitch
+                                        )
+                                    },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Rounded.PlayArrow, "Preview",
+                                        tint = AccentCyan, modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                            RadioButton(
+                                selected = isSelected,
+                                onClick = {
+                                    selectedAccent = accent.id
+                                    prefs.ttsAccent = accent.id
+                                },
+                                colors = RadioButtonDefaults.colors(selectedColor = AccentCyan),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        if (index < AccentTTSManager.ACCENTS.size - 1) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 8.dp),
+                                color = TextMuted.copy(alpha = 0.06f)
+                            )
+                        }
+                    }
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 16.dp),
+                        color = TextMuted.copy(alpha = 0.1f)
+                    )
+
                     // Speech Speed
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -400,60 +386,17 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(28.dp))
 
-            // ═══════════════════════════════════════
-            // LANGUAGE
-            // ═══════════════════════════════════════
-            Text("Language", style = MaterialTheme.typography.titleMedium, color = TextPrimary)
-            Spacer(Modifier.height(4.dp))
-            Text("AI response and voice language", style = MaterialTheme.typography.bodySmall, color = TextMuted)
-            Spacer(Modifier.height(16.dp))
-
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = SurfaceCard.copy(alpha = 0.6f))
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    val languages = listOf(
-                        "en" to "English (US)",
-                        "en-gb" to "English (UK)",
-                        "hi" to "Hindi"
-                    )
-                    languages.forEachIndexed { index, (code, name) ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 6.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(name, style = MaterialTheme.typography.bodyMedium, color = TextPrimary)
-                            RadioButton(
-                                selected = selectedLanguage == code,
-                                onClick = {
-                                    selectedLanguage = code
-                                    prefs.language = code
-                                },
-                                colors = RadioButtonDefaults.colors(selectedColor = AccentCyan)
-                            )
-                        }
-                        if (index < languages.size - 1) {
-                            HorizontalDivider(color = TextMuted.copy(alpha = 0.08f))
-                        }
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(28.dp))
-
             // ── Reset ──
             OutlinedButton(
                 onClick = {
                     ttsSpeed = 1.0f
                     ttsPitch = 1.0f
                     selectedLanguage = "en"
+                    selectedAccent = "indian"
                     prefs.ttsSpeed = 1.0f
                     prefs.ttsPitch = 1.0f
                     prefs.language = "en"
+                    prefs.ttsAccent = "indian"
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -468,8 +411,9 @@ fun SettingsScreen(
 
             // ── About ──
             Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = SurfaceCard.copy(alpha = 0.4f))
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.08f)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, GlassBorder)
             ) {
                 Column(
                     modifier = Modifier
@@ -499,5 +443,6 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(40.dp))
         }
+        } // Close glassmorphism background Box
     }
 }

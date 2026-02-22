@@ -171,11 +171,11 @@ object LLMPerformanceBooster {
             }
             deviceRAM >= 8192 && isLargeModel -> 4000    // 8GB + big model
             deviceRAM >= 8192 -> 6000                     // 8GB + small model
-            deviceRAM >= 6144 && isLargeModel -> 2000     // 6GB + big model → ~500 tokens → ~20s TTFT
-            deviceRAM >= 6144 -> 3000                     // 6GB + small model
-            deviceRAM >= 4096 && isLargeModel -> 1500     // 4GB + big model
-            deviceRAM >= 4096 -> 2500                     // 4GB + small model
-            deviceRAM >= 3072 -> 1200                     // 3GB
+            deviceRAM >= 6144 && isLargeModel -> 2500     // 6GB + big model → enough for detailed answers
+            deviceRAM >= 6144 -> 3500                     // 6GB + small model
+            deviceRAM >= 4096 && isLargeModel -> 2000     // 4GB + big model (was 1500 — too restrictive)
+            deviceRAM >= 4096 -> 3000                     // 4GB + small model
+            deviceRAM >= 3072 -> 1400                     // 3GB
             else -> 800                                   // 2GB
         }
     }
@@ -197,14 +197,14 @@ object LLMPerformanceBooster {
         // Must leave enough room for prompt (system + doc + question).
         return when {
             isTinyModel -> 256   // 256 output + ~300 input = 556 tokens, safe for 2048 ctx
-            deviceRAM >= 8192 && isLargeModel -> 600   // 8GB + big model
-            deviceRAM >= 8192 -> 768                    // 8GB + small model
-            deviceRAM >= 6144 && isLargeModel -> 512    // 6GB + big model → proper detailed answers
-            deviceRAM >= 6144 -> 512                    // 6GB + small model
-            deviceRAM >= 4096 && isLargeModel -> 384    // 4GB + big model
-            deviceRAM >= 4096 -> 512                    // 4GB + small model
-            deviceRAM >= 3072 -> 384                    // 3GB
-            else -> 256                                 // 2GB
+            deviceRAM >= 8192 && isLargeModel -> 900   // 8GB + big model → ~650 words
+            deviceRAM >= 8192 -> 900                    // 8GB + small model
+            deviceRAM >= 6144 && isLargeModel -> 800    // 6GB + big model → ~550 words (was 640, caused incomplete)
+            deviceRAM >= 6144 -> 800                    // 6GB + small model
+            deviceRAM >= 4096 && isLargeModel -> 750    // 4GB+ big model → was 600 (too low)
+            deviceRAM >= 4096 -> 800                    // 4GB + small model
+            deviceRAM >= 3072 -> 550                    // 3GB
+            else -> 350                                 // 2GB
         }
     }
 
