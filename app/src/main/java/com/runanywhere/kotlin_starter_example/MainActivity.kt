@@ -10,6 +10,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -104,16 +108,21 @@ fun RunAnywhereApp() {
     val navController = rememberNavController()
     val modelService: ModelService = viewModel()
     val context = androidx.compose.ui.platform.LocalContext.current
+    
+    var showSplash by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(true) }
 
     // Load saved model preference
     androidx.compose.runtime.LaunchedEffect(Unit) {
         modelService.initWithPreferences(context)
     }
-
-    NavHost(
-        navController = navController,
-        startDestination = "youlearn_home"
-    ) {
+    
+    if (showSplash) {
+        SplashScreen(onSplashComplete = { showSplash = false })
+    } else {
+        NavHost(
+            navController = navController,
+            startDestination = "youlearn_home"
+        ) {
         // ── YouLearn Screens ──
         composable("youlearn_home") {
             YouLearnHomeScreen(
@@ -174,6 +183,7 @@ fun RunAnywhereApp() {
                 onNavigateBack = { navController.popBackStack() },
                 modelService = modelService
             )
+        }
         }
     }
 }

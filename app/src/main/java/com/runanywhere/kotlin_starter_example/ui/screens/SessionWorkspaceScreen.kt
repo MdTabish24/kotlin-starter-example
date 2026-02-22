@@ -2497,23 +2497,16 @@ private fun ChatBubble(
                 modifier = Modifier.padding(start = 12.dp, bottom = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(AccentCyan.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.chat_logo),
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-                Spacer(Modifier.width(6.dp))
+                Image(
+                    painter = painterResource(id = R.drawable.chat_logo),
+                    contentDescription = null,
+                    modifier = Modifier.size(56.dp),
+                    contentScale = ContentScale.Fit
+                )
+                Spacer(Modifier.width(8.dp))
                 Text(
                     "AI",
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.labelMedium,
                     color = AccentCyan.copy(alpha = 0.7f)
                 )
             }

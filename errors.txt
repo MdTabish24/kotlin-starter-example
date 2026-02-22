@@ -1,115 +1,19 @@
 ﻿====================================================
   YouLearn Error Log
-  2026-02-22 16:07:15
+  2026-02-22 16:45:34
 ====================================================
 
-App PID: 24526
+App PID: 22644
 
-[ERR] 02-22 16:07:50.985 E/FramePredict(24526): registerContentObserver fail
-[ERR] 02-22 16:07:51.782 E/LB      (24526): fail to open node: No such file or directory
-[APP] 02-22 16:07:51.832 D/ModelService(24526): Active LLM: smollm2-360m-instruct-q8_0 (deviceRAM: 5461MB)
-[APP] 02-22 16:08:08.201 D/AccentTTS(24526): Android TTS ready. Accents: 81
-[APP] 02-22 16:08:30.548 I/starter_example(24526): Compiler allocated 4580KB to compile kotlin.Unit com.runanywhere.kotlin_starter_example.ui.screens.SettingsScreenKt.SettingsScreen$lambda$58$lambda$57$lambda$56$lambda$53(com.runanywhere.kotlin_starter_example.data.AppPreferences, androidx.compose.runtime.MutableState, com.runanywhere.kotlin_starter_example.utils.AccentTTSManager, androidx.compose.runtime.MutableFloatState, androidx.compose.runtime.MutableFloatState, androidx.compose.foundation.layout.ColumnScope, androidx.compose.runtime.Composer, int)
-[APP] 02-22 16:08:31.817 D/ModelService(24526): Loading LLM: Llama-3.2-1B-Instruct-Q4_K_M
-[APP] 02-22 16:08:31.844 D/ModelService(24526): Model Llama-3.2-1B-Instruct-Q4_K_M downloaded: true
-[APP] 02-22 16:08:31.845 D/ModelService(24526): Low-RAM device (5461MB): aggressive GC before model load
-[APP] 02-22 16:08:31.905 D/LLMBooster(24526): GC complete. Free mem: 504MB
-[SDK] 02-22 16:08:32.115 I/System.out(24526): [DEBUG] [CppBridgeLLM] [Native] State changed: NOT_CREATED -> CREATED
-[SDK] 02-22 16:08:32.116 I/System.out(24526): [DEBUG] [CppBridgeLLM] [Native] State changed: CREATED -> LOADING
-[SDK] 02-22 16:08:32.116 I/System.out(24526): [INFO] [CppBridgeLLM] [Native] Loading model: Llama-3.2-1B-Instruct-Q4_K_M from /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/llm/Llama-3.2-1B-Instruct-Q4_K_M
-[APP] 02-22 16:08:32.342 D/AccentTTS(24526): Android TTS ready. Accents: 81
-[SDK] 02-22 16:08:34.568 I/System.out(24526): [DEBUG] [CppBridgeLLM] [Native] State changed: LOADING -> READY
-[SDK] 02-22 16:08:34.568 I/System.out(24526): [INFO] [CppBridgeLLM] [Native] Model loaded successfully: Llama-3.2-1B-Instruct-Q4_K_M
-[SDK] 02-22 16:08:34.569 I/System.out(24526): [DEBUG] [CppBridgeState] [Native] Component LLM state changed: NOT_CREATED -> READY
-[APP] 02-22 16:08:34.576 D/LLMBooster(24526): Native heap: 628MB allocated / 630MB total
-[APP] 02-22 16:08:34.576 D/ModelService(24526): LLM loaded: Llama-3.2-1B-Instruct-Q4_K_M (context=4096, nativeHeap=628MB, deviceRAM=5461MB)
-[APP] 02-22 16:08:34.576 D/ModelService(24526): Low-RAM settle: waiting 2s for native pages to stabilize...
-[APP] 02-22 16:08:36.580 D/LLMBooster(24526): Native heap: 623MB allocated / 625MB total
-[APP] 02-22 16:08:36.580 D/ModelService(24526): Post-settle native heap: 623MB (total=625MB, free=2MB)
-[APP] 02-22 16:08:41.578 D/SmartDocSearch(24526): Index cleared (memory + disk)
-[APP] 02-22 16:08:42.195 D/AccentTTS(24526): Android TTS ready. Accents: 81
-[APP] 02-22 16:08:48.094 D/DocumentReader(24526): Reading document: Healthcare.docx (mime: application/vnd.openxmlformats-officedocument.wordprocessingml.document, ext: docx)
-[ERR] 02-22 16:08:48.188 E/starter_example(24526): hiddenapi: Accessing hidden method Ljava/lang/invoke/LambdaMetafactory;->metafactory(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite; (runtime_flags=0, domain=core-platform, api=blocked) from /data/app/~~JEFVyWmbHx5fUoRpjDmLQg==/com.runanywhere.kotlin_starter_example-2TIJkd6LL_cSLYhQGZyAXA==/base.apk!classes13.dex (domain=app) using linking: denied
-[ERR] 02-22 16:08:48.192 E/starter_example(24526): hiddenapi: Accessing hidden method Ljava/lang/invoke/LambdaMetafactory;->metafactory(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite; (runtime_flags=0, domain=core-platform, api=blocked) from /data/app/~~JEFVyWmbHx5fUoRpjDmLQg==/com.runanywhere.kotlin_starter_example-2TIJkd6LL_cSLYhQGZyAXA==/base.apk!classes13.dex (domain=app) using linking: denied
-[ERR] 02-22 16:08:48.199 E/starter_example(24526): hiddenapi: Accessing hidden method Ljava/lang/invoke/LambdaMetafactory;->metafactory(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite; (runtime_flags=0, domain=core-platform, api=blocked) from /data/app/~~JEFVyWmbHx5fUoRpjDmLQg==/com.runanywhere.kotlin_starter_example-2TIJkd6LL_cSLYhQGZyAXA==/base.apk!classes13.dex (domain=app) using linking: denied
-[ERR] 02-22 16:08:48.206 E/starter_example(24526): hiddenapi: Accessing hidden method Ljava/lang/invoke/LambdaMetafactory;->metafactory(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite; (runtime_flags=0, domain=core-platform, api=blocked) from /data/app/~~JEFVyWmbHx5fUoRpjDmLQg==/com.runanywhere.kotlin_starter_example-2TIJkd6LL_cSLYhQGZyAXA==/base.apk!classes13.dex (domain=app) using linking: denied
-[APP] 02-22 16:08:48.250 W/System.err(24526): 	at com.runanywhere.kotlin_starter_example.utils.DocumentReader.readDOCX(DocumentReader.kt:195)
-[APP] 02-22 16:08:48.250 W/System.err(24526): 	at com.runanywhere.kotlin_starter_example.utils.DocumentReader.readDocument(DocumentReader.kt:41)
-[ERR] 02-22 16:08:48.257 E/starter_example(24526): hiddenapi: Accessing hidden method Ljava/lang/invoke/LambdaMetafactory;->metafactory(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite; (runtime_flags=0, domain=core-platform, api=blocked) from /data/app/~~JEFVyWmbHx5fUoRpjDmLQg==/com.runanywhere.kotlin_starter_example-2TIJkd6LL_cSLYhQGZyAXA==/base.apk!classes13.dex (domain=app) using linking: denied
-[APP] 02-22 16:08:49.637 D/DocumentReader(24526): Extracted 9729 chars from: Healthcare.docx
-[APP] 02-22 16:08:49.653 D/SmartDocSearch(24526): Saved cleaned document to file: /data/user/0/com.runanywhere.kotlin_starter_example/files/youlearn_docs/56ca55ea-810f-4038-9ce2-f56b2d954c56.txt (9729 raw -> 9727 clean chars)
-[APP] 02-22 16:08:49.653 D/SmartDocSearch(24526): ΓòÉΓòÉΓòÉ Indexing document (FILE-BASED): 9729 chars ΓòÉΓòÉΓòÉ
-[APP] 02-22 16:08:49.762 D/SmartDocSearch(24526): Indexed 33 chunks from 419 lines (FILE-BASED)
-[APP] 02-22 16:08:49.762 D/SmartDocSearch(24526): In-memory: 653 wordΓåÆchunk mappings, 618 word relations
-[APP] 02-22 16:08:49.762 D/SmartDocSearch(24526): On disk: fulltext=9731 bytes
-[APP] 02-22 16:08:58.520 D/LLMBooster(24526): Native heap: 637MB allocated / 640MB total
-[APP] 02-22 16:08:58.521 D/LLMBoost(24526): PRE-GEN STATE: deviceRAM=5461MB, nativeHeap=637MB, nativeFree=2MB, systemAvail=1758MB, cumulativeTokens=0
-[APP] 02-22 16:08:58.521 D/LLMBooster(24526): Native heap: 637MB allocated / 640MB total
-[APP] 02-22 16:08:58.522 D/ModelService(24526): Safety check: native=637MB, device=5461MB, danger=4095MB, model=Llama-3.2-1B-Instruct-Q4_K_M
-[APP] 02-22 16:08:58.522 D/LLMBoost(24526): KV cache OK: 0 tokens < 1200 threshold, skipping reset
-[APP] 02-22 16:08:58.527 D/BridgeGen(24526): ΓÜí Direct bridge generate: maxTok=750, temp=0.65, topK=20, topP=0.85, repeatPen=1.15
-[APP] 02-22 16:08:58.528 D/BridgeGen(24526): ΓòöΓòÉ PRE-GENERATE MEMORY ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
-[APP] 02-22 16:08:58.528 D/BridgeGen(24526): Γòæ Native: 637MB used / 640MB total / 2MB FREE
-[APP] 02-22 16:08:58.529 D/BridgeGen(24526): Γòæ System: 1758MB available | LowMem=false
-[APP] 02-22 16:08:58.529 D/BridgeGen(24526): Γòæ Prompt: 694 chars | maxTokens=750
-[APP] 02-22 16:08:58.529 D/BridgeGen(24526): ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
-[SDK] 02-22 16:08:58.529 I/System.out(24526): [DEBUG] [CppBridgeLLM] [Native] State changed: READY -> GENERATING
-[SDK] 02-22 16:08:58.531 I/RACCommonsJNI(24526): racLlmComponentGenerateStreamWithCallback called with handle=-5476376620925832352
-[SDK] 02-22 16:08:58.531 I/RACCommonsJNI(24526): racLlmComponentGenerateStreamWithCallback prompt length=694
-[SDK] 02-22 16:08:58.531 I/RACCommonsJNI(24526): racLlmComponentGenerateStreamWithCallback calling rac_llm_component_generate_stream...
-[SDK] 02-22 16:10:10.572 I/RACCommonsJNI(24526): racLlmComponentGenerateStreamWithCallback result text length=1418, tokens=275
-[SDK] 02-22 16:10:10.577 I/RACCommonsJNI(24526): racLlmComponentGenerateStreamWithCallback returning JSON: 1559 bytes
-[SDK] 02-22 16:10:10.578 I/System.out(24526): [DEBUG] [CppBridgeLLM] [Native] State changed: GENERATING -> READY
-[APP] 02-22 16:10:10.578 D/BridgeGen(24526): Γ£à Done: 355 tokens, 4.927271 tok/s, 72049ms
-[APP] 02-22 16:11:16.669 D/AccentTTS(24526): Android TTS ready. Accents: 81
-[APP] 02-22 16:11:32.202 D/SmartDocSearch(24526): Index cleared (memory + disk)
-[APP] 02-22 16:11:33.465 D/AccentTTS(24526): Android TTS ready. Accents: 81
-[APP] 02-22 16:11:37.997 D/SmartDocSearch(24526): Index cleared (memory + disk)
-[APP] 02-22 16:11:39.282 D/AccentTTS(24526): Android TTS ready. Accents: 81
-[APP] 02-22 16:11:41.591 D/SmartDocSearch(24526): Index cleared (memory + disk)
-[APP] 02-22 16:11:41.600 D/SmartDocSearch(24526): ΓòÉΓòÉΓòÉ Indexing document (FILE-BASED): 9727 chars ΓòÉΓòÉΓòÉ
-[APP] 02-22 16:11:41.668 D/SmartDocSearch(24526): Indexed 33 chunks from 417 lines (FILE-BASED)
-[APP] 02-22 16:11:41.668 D/SmartDocSearch(24526): In-memory: 653 wordΓåÆchunk mappings, 618 word relations
-[APP] 02-22 16:11:41.668 D/SmartDocSearch(24526): On disk: fulltext=9729 bytes
-[APP] 02-22 16:11:42.775 D/AccentTTS(24526): Android TTS ready. Accents: 81
-[APP] 02-22 16:12:09.295 I/starter_example(24526): Compiler allocated 4557KB to compile kotlin.Unit com.runanywhere.kotlin_starter_example.ui.screens.YouLearnHomeScreenKt.YouLearnHomeScreen$lambda$24$lambda$23$lambda$13(com.runanywhere.kotlin_starter_example.services.ModelService, androidx.compose.foundation.layout.ColumnScope, androidx.compose.runtime.Composer, int)
-[APP] 02-22 16:12:09.313 I/starter_example(24526): Compiler allocated 4362KB to compile void com.runanywhere.kotlin_starter_example.ui.screens.YouLearnHomeScreenKt.YouLearnHomeScreen(kotlin.jvm.functions.Function0, kotlin.jvm.functions.Function0, kotlin.jvm.functions.Function0, com.runanywhere.kotlin_starter_example.services.ModelService, androidx.compose.ui.Modifier, androidx.compose.runtime.Composer, int, int)
-[APP] 02-22 16:12:19.621 D/AccentTTS(24526): Android TTS ready. Accents: 81
-[APP] 02-22 16:12:35.622 D/SmartDocSearch(24526): Index cleared (memory + disk)
-[APP] 02-22 16:12:36.905 D/AccentTTS(24526): Android TTS ready. Accents: 81
-[APP] 02-22 16:12:40.652 I/starter_example(24526): Compiler allocated 4433KB to compile void com.runanywhere.kotlin_starter_example.ui.screens.SessionWorkspaceScreenKt.SessionWorkspaceScreen(java.lang.String, kotlin.jvm.functions.Function0, com.runanywhere.kotlin_starter_example.services.ModelService, androidx.compose.ui.Modifier, androidx.compose.runtime.Composer, int, int)
-[APP] 02-22 16:13:11.579 D/SmartDocSearch(24526): Index cleared (memory + disk)
-[APP] 02-22 16:13:11.580 D/SmartDocSearch(24526): ΓòÉΓòÉΓòÉ Indexing document (FILE-BASED): 9727 chars ΓòÉΓòÉΓòÉ
-[APP] 02-22 16:13:11.650 D/SmartDocSearch(24526): Indexed 33 chunks from 417 lines (FILE-BASED)
-[APP] 02-22 16:13:11.650 D/SmartDocSearch(24526): In-memory: 653 wordΓåÆchunk mappings, 618 word relations
-[APP] 02-22 16:13:11.650 D/SmartDocSearch(24526): On disk: fulltext=9729 bytes
-[APP] 02-22 16:13:12.792 D/AccentTTS(24526): Android TTS ready. Accents: 81
-[ERR] 02-22 16:13:36.954 D/Diagram (24526):     E --> F[Module Introduction Healt]
-[ERR] 02-22 16:13:36.954 D/Diagram (24526):     E --> G[Module Medical Terminolog]
-[APP] 02-22 16:13:41.887 D/ModelService(24526): Resetting LLM context (FULL memory free) for Llama-3.2-1B-Instruct-Q4_K_M
-[SDK] 02-22 16:13:41.888 I/System.out(24526): [DEBUG] [CppBridgeLLM] [Native] State changed: READY -> UNLOADING
-[SDK] 02-22 16:13:41.889 I/System.out(24526): [INFO] [CppBridgeLLM] [Native] Unloading model: Llama-3.2-1B-Instruct-Q4_K_M
-[SDK] 02-22 16:13:42.026 I/System.out(24526): [DEBUG] [CppBridgeLLM] [Native] State changed: UNLOADING -> CREATED
-[SDK] 02-22 16:13:42.026 I/System.out(24526): [DEBUG] [CppBridgeState] [Native] Component LLM state changed: READY -> CREATED
-[APP] 02-22 16:13:42.346 D/ModelService(24526): After unload ΓÇö native heap: 110MB
-[SDK] 02-22 16:13:42.355 I/System.out(24526): [DEBUG] [CppBridgeLLM] [Native] State changed: CREATED -> LOADING
-[SDK] 02-22 16:13:42.355 I/System.out(24526): [INFO] [CppBridgeLLM] [Native] Loading model: Llama-3.2-1B-Instruct-Q4_K_M from /data/user/0/com.runanywhere.kotlin_starter_example/files/runanywhere/models/llm/Llama-3.2-1B-Instruct-Q4_K_M
-[SDK] 02-22 16:13:44.422 I/System.out(24526): [DEBUG] [CppBridgeLLM] [Native] State changed: LOADING -> READY
-[SDK] 02-22 16:13:44.422 I/System.out(24526): [INFO] [CppBridgeLLM] [Native] Model loaded successfully: Llama-3.2-1B-Instruct-Q4_K_M
-[SDK] 02-22 16:13:44.423 I/System.out(24526): [DEBUG] [CppBridgeState] [Native] Component LLM state changed: CREATED -> READY
-[APP] 02-22 16:13:46.431 D/ModelService(24526): LLM full reset done in 4544ms ΓÇö ALL memory freed and reloaded clean
-[APP] 02-22 16:13:46.542 D/LLMBooster(24526): Preparing for LLM inference. Free heap: 500MB
-[APP] 02-22 16:13:46.549 D/BridgeGen(24526): ΓÜí Direct bridge generate: maxTok=512, temp=0.5, topK=20, topP=0.85, repeatPen=1.15
-[APP] 02-22 16:13:46.550 D/BridgeGen(24526): ΓòöΓòÉ PRE-GENERATE MEMORY ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
-[APP] 02-22 16:13:46.550 D/BridgeGen(24526): Γòæ Native: 656MB used / 661MB total / 4MB FREE
-[APP] 02-22 16:13:46.550 D/BridgeGen(24526): Γòæ System: 1979MB available | LowMem=false
-[APP] 02-22 16:13:46.550 D/BridgeGen(24526): Γòæ Prompt: 1542 chars | maxTokens=512
-[APP] 02-22 16:13:46.550 D/BridgeGen(24526): ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
-[SDK] 02-22 16:13:46.550 I/System.out(24526): [DEBUG] [CppBridgeLLM] [Native] State changed: READY -> GENERATING
-[SDK] 02-22 16:13:46.551 I/RACCommonsJNI(24526): racLlmComponentGenerateStreamWithCallback called with handle=-5476376620925832352
-[SDK] 02-22 16:13:46.551 I/RACCommonsJNI(24526): racLlmComponentGenerateStreamWithCallback prompt length=1542
-[SDK] 02-22 16:13:46.551 I/RACCommonsJNI(24526): racLlmComponentGenerateStreamWithCallback calling rac_llm_component_generate_stream...
-[SDK] 02-22 16:14:31.580 I/RACCommonsJNI(24526): racLlmComponentGenerateStreamWithCallback result text length=444, tokens=98
-[SDK] 02-22 16:14:31.580 I/RACCommonsJNI(24526): racLlmComponentGenerateStreamWithCallback returning JSON: 576 bytes
-[SDK] 02-22 16:14:31.585 I/System.out(24526): [DEBUG] [CppBridgeLLM] [Native] State changed: GENERATING -> READY
-[APP] 02-22 16:14:31.585 D/BridgeGen(24526): Γ£à Done: 111 tokens, 2.465078 tok/s, 45035ms
+[APP] 02-22 16:47:00.168 D/ModelService(22644): Registering all models...
+[APP] 02-22 16:47:00.176 D/ModelService(22644): Registered LLM: smollm2-360m-instruct-q8_0
+[APP] 02-22 16:47:00.177 D/ModelService(22644): Registered LLM: smollm2-1.7b-instruct-q4_k_m
+[APP] 02-22 16:47:00.178 D/ModelService(22644): Registered LLM: Llama-3.2-1B-Instruct-Q4_K_M
+[APP] 02-22 16:47:00.179 D/ModelService(22644): Registered LLM: Llama-3.2-3B-Instruct-Q4_K_M
+[APP] 02-22 16:47:00.180 D/ModelService(22644): Registered LLM: Qwen2.5-1.5B-Instruct-Q4_K_M
+[APP] 02-22 16:47:00.181 D/ModelService(22644): Registered LLM: tinyllama-1.1b-chat-v1.0.Q4_K_M
+[APP] 02-22 16:47:00.182 D/ModelService(22644): Registered STT: sherpa-onnx-whisper-tiny.en
+[APP] 02-22 16:47:00.183 D/ModelService(22644): Registered TTS: vits-piper-en_US-lessac-medium
+[ERR] 02-22 16:47:00.259 E/FramePredict(22644): registerContentObserver fail
+[ERR] 02-22 16:47:00.794 E/LB      (22644): fail to open node: No such file or directory
+[APP] 02-22 16:47:00.828 D/ModelService(22644): Active LLM: Llama-3.2-1B-Instruct-Q4_K_M (deviceRAM: 5461MB)

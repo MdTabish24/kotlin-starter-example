@@ -1,296 +1,698 @@
-# RunAnywhere Kotlin SDK Starter
+# YouLearn - 100% Offline AI Study Companion
 
-A comprehensive Android starter app demonstrating the **RunAnywhere SDK** capabilities - privacy-first, on-device AI for Android with Kotlin and Jetpack Compose.
+<div align="center">
+
+<img src="app/src/main/res/drawable/app_logo.png" width="200" alt="YouLearn Logo">
+
+**Your Personal AI Study Assistant - 100% Offline & Private**
+
+[![Android](https://img.shields.io/badge/Platform-Android-green.svg)](https://www.android.com/)
+[![API](https://img.shields.io/badge/API-26%2B-brightgreen.svg)](https://android-arsenal.com/api?level=26)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-blue.svg)](https://kotlinlang.org/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+### 📥 Download Now
+
+<a href="https://github.com/YOUR_USERNAME/YouLearn/releases/download/v1.0.0/YouLearn.apk">
+<img src="https://img.shields.io/badge/Download-YouLearn%20APK-brightgreen?style=for-the-badge&logo=android" alt="Download APK" width="250">
+</a>
+
+**Latest Version:** v1.0.0 | **Size:** ~500 MB | **Android:** 8.0+
+
+[Features](#features) • [Installation](#installation) • [Usage](#usage) • [Models](#ai-models) • [Screenshots](#screenshots)
+
+</div>
+
+---
+
+## Overview
+
+**YouLearn** is a powerful, privacy-first AI study companion that runs **completely offline** on your Android device. No internet required, no data sent to servers - your privacy is 100% protected.
+
+With **6+ AI models**, voice recognition, document analysis, and intelligent note-taking, YouLearn brings cutting-edge AI directly to your pocket for studying, learning, and research.
+
+---
 
 ## Features
 
-This starter app showcases all major capabilities of the RunAnywhere SDK:
+<table>
+<tr>
+<td width="60%">
 
-### 🧠 Chat (LLM Text Generation)
-- On-device text generation using **SmolLM2 360M**
-- Real-time chat interface with message history
-- Powered by llama.cpp backend
+### 🤖 AI Chat & Intelligence
 
-### 🎤 Speech to Text (STT)
-- Real-time speech recognition using **Whisper Tiny**
-- Microphone permission handling
-- Voice activity detection
-- Powered by Sherpa-ONNX backend
+- **6+ On-Device AI Models** - SmolLM2, Llama 3.2, Qwen 2.5, TinyLlama
+- **Real-time Streaming Responses** - See AI generate responses word-by-word
+- **Context-Aware Conversations** - Remembers previous messages in session
+- **Smart Token Management** - Automatic optimization for speed
+- **Performance Boost** - CPU priority & battery optimization
+- **One-Click Model Switching** - Change models mid-conversation
+- **Adaptive Memory Management** - Auto-adjusts based on device RAM
 
-### 🔊 Text to Speech (TTS)
-- Natural voice synthesis using **Piper TTS**
-- Sample texts and custom input
-- High-quality US English voice (Lessac)
-- Powered by Sherpa-ONNX backend
+</td>
+<td width="40%">
 
-### 🎯 Voice Pipeline (Voice Agent)
-- Complete voice conversation pipeline
-- Combines STT → LLM → TTS
-- Real-time conversation flow
-- Status indicators for each stage
+<img src="app/src/main/res/drawable/chat_logo.png" width="100%" alt="AI Chat">
 
-## Getting Started
+</td>
+</tr>
+</table>
 
-### Prerequisites
+---
 
-- **Android Studio**: Hedgehog (2023.1.1) or later
-- **Minimum SDK**: API 26 (Android 8.0)
-- **Target SDK**: API 35 (Android 15)
-- **Kotlin**: 2.0.21 or later
-- **Java**: 17
+<table>
+<tr>
+<td width="60%">
 
-### Installation
+### 🎤 Voice Assistant
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd starter_apps/kotlinstarterexample
-   ```
+- **Offline Voice Recognition** - Android built-in speech recognition
+- **Live Transcription** - See your speech converted to text in real-time
+- **Text-to-Speech (TTS)** - AI speaks responses aloud
+- **10+ Voice Accents** - Indian 🇮🇳, US 🇺🇸, UK 🇬🇧, Australian 🇦🇺, Canadian 🇨🇦 & more
+- **Voice Speed & Pitch Control** - Customize to your preference
+- **Animated Voice UI** - Beautiful glowing circle with pulse effects
+- **Voice Activity Detection** - Auto-stops after 1.5s silence
 
-2. **Open in Android Studio**
-   - Open Android Studio
-   - Select "Open an Existing Project"
-   - Navigate to the `kotlinstarterexample` folder
-   - Click "OK"
+</td>
+<td width="40%">
 
-3. **Sync Gradle**
-   - Android Studio will automatically sync Gradle
-   - If not, click "Sync Now" in the notification bar
+<img src="app/src/main/res/drawable/app_background.jpg" width="100%" alt="Voice Assistant">
 
-4. **Run the app**
-   - Connect an Android device or start an emulator
-   - Click the "Run" button (▶️) in Android Studio
-   - Select your device/emulator
-   - The app will build and install
+</td>
+</tr>
+</table>
 
-### First Launch
+---
 
-On the first launch:
+<table>
+<tr>
+<td width="60%">
 
-1. **Home Screen**: You'll see 4 feature cards
-2. **Load Models**: Each feature requires downloading AI models:
-   - **LLM**: ~400 MB (SmolLM2 360M)
-   - **STT**: ~75 MB (Whisper Tiny)
-   - **TTS**: ~20 MB (Piper TTS)
-3. **Grant Permissions**: STT and Voice Pipeline require microphone permission
-4. **Start Using**: Once models are loaded, all features are ready!
+### 📷 Document Analysis & RAG
 
-## Architecture
+- **PDF Document Analysis** - Read and summarize PDF files
+- **DOCX/PPTX Support** - Analyze Word and PowerPoint documents
+- **Image OCR** - Extract text from images using ML Kit
+- **Smart Document Search** - Intelligent chunk retrieval with TF-IDF
+- **Question-Type Detection** - Understands definition, process, comparison queries
+- **Multi-Format Support** - PDF, DOCX, PPTX, PNG, JPG, TXT
+- **File-Based Indexing** - Memory-efficient document storage
 
-### Project Structure
+</td>
+<td width="40%">
+
+<img src="app/src/main/res/drawable/app_logo.png" width="100%" alt="Document Analysis">
+
+</td>
+</tr>
+</table>
+
+---
+
+<table>
+<tr>
+<td width="60%">
+
+### 🎵 Audio Notes & Transcription
+
+- **Audio File Upload** - Support for MP3, WAV, and more
+- **Speech-to-Text Transcription** - Convert audio to text offline
+- **AI Summarization** - Get concise summaries of long recordings
+- **Key Points Extraction** - Identify important topics automatically
+- **Export Notes** - Download transcriptions as text files
+- **Whisper Tiny Engine** - High-quality offline transcription
+
+</td>
+<td width="40%">
+
+<img src="app/src/main/res/drawable/chat_logo.png" width="100%" alt="Audio Notes">
+
+</td>
+</tr>
+</table>
+
+---
+
+<table>
+<tr>
+<td width="60%">
+
+### 💬 Study Session Management
+
+- **Session History** - All conversations saved automatically
+- **Resume Old Sessions** - Continue any previous conversation
+- **New Session Creation** - Start fresh anytime
+- **Document Attachment** - Attach PDFs, DOCX, images per session
+- **Auto-Save** - Saves every 5 seconds
+- **Smart Notes** - Markdown-based note-taking
+- **PDF Export** - Generate professional study notes PDFs
+
+</td>
+<td width="40%">
+
+<img src="app/src/main/res/drawable/app_background.jpg" width="100%" alt="Session Management">
+
+</td>
+</tr>
+</table>
+
+---
+
+<table>
+<tr>
+<td width="60%">
+
+### ⚙️ Settings & Personalization
+
+- **Model Selection** - Choose from 6 LLM models
+- **Voice Character Selection** - Choose from 10+ TTS voices
+- **Voice Preview** - Test voices before selecting
+- **Speed Control** - 0.5x to 2.0x playback speed
+- **Pitch Adjustment** - 0.5 to 2.0 voice pitch
+- **TTS Toggle** - Enable/disable text-to-speech
+- **Persistent Settings** - All preferences saved locally
+
+</td>
+<td width="40%">
+
+<img src="app/src/main/res/drawable/app_logo.png" width="100%" alt="Settings">
+
+</td>
+</tr>
+</table>
+
+### System & Performance
+
+- **100% Offline Operation** - No internet needed after model download
+- **Device Resource Monitoring** - RAM, storage, battery checks
+- **Smart Model Recommendations** - Best model suggested for your device
+- **Adaptive Performance** - Auto-adjusts based on device tier
+- **Battery Optimization** - Warnings for heavy models
+- **Crash Prevention** - Memory management & safety checks
+- **Dark Mode** - Eye-friendly & battery-saving UI
+- **Smooth Animations** - Optimized, glitch-free interface
+
+---
+
+## AI Models
+
+YouLearn supports **6 powerful AI models** ranging from lightweight to heavy:
+
+| Model | Size | Parameters | Quality | Speed | Best For |
+|-------|------|------------|---------|-------|----------|
+| SmolLM2 360M | 400 MB | 360M | Basic | ⚡⚡⚡ | Quick responses, testing |
+| SmolLM2 1.7B | 1.0 GB | 1.7B | Good | ⚡⚡ | General chat, balanced |
+| Llama 3.2 1B | 750 MB | 1B | Better | ⚡⚡ | Quality conversations |
+| Llama 3.2 3B | 2.0 GB | 3B | Excellent | ⚡ | High quality responses |
+| Qwen 2.5 1.5B | 1.0 GB | 1.5B | Good | ⚡⚡ | Detailed answers |
+| TinyLlama 1.1B | 670 MB | 1.1B | Good | ⚡⚡ | Lightweight, fast |
+
+**Device Recommendations:**
+- **Low-end devices** (2-3 GB RAM): SmolLM2 360M
+- **Mid-range devices** (4-6 GB RAM): SmolLM2 1.7B, Llama 1B
+- **High-end devices** (8+ GB RAM): Llama 3B, Qwen 1.5B
+
+---
+
+## Installation
+
+### Method 1: Download APK (Recommended)
+
+1. Go to [GitHub Releases](https://github.com/YOUR_USERNAME/YouLearn/releases)
+2. Download `YouLearn-v1.0.0.apk` (~500 MB)
+3. Enable "Install from unknown sources" in phone settings
+4. Install the APK
+5. Open YouLearn and download an AI model
+
+### Method 2: Build from Source
+
+```bash
+# Clone the repository
+git clone https://github.com/YOUR_USERNAME/YouLearn.git
+cd YouLearn
+
+# Build the APK
+./gradlew assembleDebug
+
+# Install on connected device
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
+
+---
+
+## Quick Start
+
+### Step 1: First Launch
+
+When you open YouLearn for the first time:
+1. Splash Screen with animated intro
+2. Home Screen with model list
+3. Download a model based on your device RAM
+
+### Step 2: Download Your First Model
+
+**Recommended for beginners:** SmolLM2 1.7B (1.0 GB) - Best balance of quality & speed
+
+**Steps:**
+1. Go to Home tab
+2. Find "SmolLM2 1.7B" model
+3. Tap "Download" button
+4. Wait for download to complete
+5. After download, tap "Load"
+6. Wait for "Model ready to chat!" message
+
+### Step 3: Start Studying
+
+1. Tap "New Study Session"
+2. Upload a PDF document (optional)
+3. Type a question: "Explain this concept"
+4. Watch AI response stream in real-time
+
+---
+
+## Usage Guide
+
+### Chat with AI
+
+**Basic Chat:**
+```
+You: What is machine learning?
+AI: Machine learning is a subset of artificial intelligence that enables computers to learn from data without being explicitly programmed...
+```
+
+**Follow-up Questions:**
+```
+You: What is machine learning?
+AI: [Explains machine learning]
+
+You: How is it different from deep learning?
+AI: [Uses context from previous answer to explain differences]
+```
+
+**Actions:**
+- Long-press any message to copy it
+- Tap "+ New" button to start fresh conversation
+- Tap model icon to switch models mid-conversation
+
+---
+
+### Document Analysis
+
+1. Tap attachment button in chat
+2. Select a PDF/DOCX file
+3. File preview appears with name and size
+4. Type question: "Summarize this document"
+5. AI reads and summarizes
+
+**Supported formats:** PDF, DOCX, PPTX, TXT, PNG, JPG
+
+**Example:**
+```
+[Upload: Research Paper PDF]
+You: What are the key findings?
+AI: The paper presents three main findings: 1) ...
+```
+
+---
+
+### Voice Assistant
+
+1. Go to Home tab
+2. Tap "New Study Session"
+3. Tap the microphone icon
+4. Speak your question
+5. See live transcription appear
+6. AI processes and speaks response
+
+**Features:**
+- Real-time amplitude visualization
+- Partial transcript streaming
+- Auto-stop after 1.5s silence
+- Accent-aware TTS responses
+
+---
+
+### Audio Notes
+
+1. Tap attachment button
+2. Select audio file (MP3, WAV)
+3. Tap "Analyze Audio"
+4. Wait for processing
+
+**Results include:**
+- Full Transcription - Complete text of audio
+- AI Summary - Concise overview
+- Key Points - Important topics
+
+---
+
+### Session History
+
+1. Go to History tab
+2. View all previous sessions with title, preview, timestamp
+3. Tap any session to resume
+4. Long-press to delete
+5. "Clear All" button to delete everything
+
+---
+
+### Settings & Personalization
+
+**Voice Settings:**
+1. Select Voice Character (Indian, US, UK, Australian, etc.)
+2. Adjust Speed (0.5x - 2.0x)
+3. Adjust Pitch (0.5 - 2.0)
+4. Click "Preview Voice" to test
+5. Save settings
+
+**Model Selection:**
+1. Go to Settings tab
+2. View all available models
+3. Tap "Download" for new model
+4. Tap "Load" to activate
+5. Switch models anytime
+
+---
+
+## Technical Details
+
+### Architecture
 
 ```
-app/src/main/java/com/runanywhere/kotlin_starter_example/
-├── MainActivity.kt                    # App entry point
-├── services/
-│   └── ModelService.kt               # Model management (download, load, unload)
-└── ui/
-    ├── theme/                        # App theme and colors
-    │   ├── Theme.kt
-    │   └── Type.kt
-    ├── components/                   # Reusable UI components
-    │   ├── FeatureCard.kt
-    │   └── ModelLoaderWidget.kt
-    └── screens/                      # Feature screens
-        ├── HomeScreen.kt
-        ├── ChatScreen.kt
-        ├── SpeechToTextScreen.kt
-        ├── TextToSpeechScreen.kt
-        └── VoicePipelineScreen.kt
+┌─────────────────────────────────────┐
+│         Presentation Layer          │
+│  (UI Screens, Compose Components)   │
+└──────────────┬──────────────────────┘
+               │
+┌──────────────▼──────────────────────┐
+│         ViewModel Layer             │
+│  (ModelService, State Management)   │
+└──────────────┬──────────────────────┘
+               │
+┌──────────────▼──────────────────────┐
+│         Domain Layer                │
+│  (Utils, Services, Data Models)     │
+└──────────────┬──────────────────────┘
+               │
+┌──────────────▼──────────────────────┐
+│         Data Layer                  │
+│  (Repositories, Local Storage)      │
+└──────────────┬──────────────────────┘
+               │
+┌──────────────▼──────────────────────┐
+│         External SDKs               │
+│  (RunAnywhere, ML Kit, iText)       │
+└─────────────────────────────────────┘
 ```
 
 ### Key Technologies
 
-- **Jetpack Compose**: Modern declarative UI
-- **Material 3**: Latest Material Design
-- **Navigation Compose**: Screen navigation
-- **Coroutines & Flow**: Asynchronous operations
-- **ViewModel**: State management
-- **RunAnywhere SDK v0.16.0-test.39**: On-device AI
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| AI Inference | RunAnywhere SDK v0.16.0 | On-device LLM execution |
+| LLM Backend | llama.cpp | GGUF model inference |
+| Voice Recognition | Android SpeechRecognizer | Offline speech-to-text |
+| Text-to-Speech | Android TTS | Voice output with accents |
+| Document Parsing | iText7, Apache POI | PDF, DOCX, PPTX extraction |
+| Image OCR | ML Kit | Text extraction from images |
+| UI Framework | Jetpack Compose | Modern declarative UI |
+| Async Operations | Kotlin Coroutines & Flow | Threading & streams |
 
-## RunAnywhere SDK Integration
+### Performance Optimizations
 
-### Dependencies
-
-The app uses three RunAnywhere packages:
-
-```kotlin
-// build.gradle.kts (app module)
-dependencies {
-    // Core SDK
-    implementation("ai.runanywhere:runanywhere-kotlin:0.16.0-test.39")
-    
-    // Backends
-    implementation("ai.runanywhere:runanywhere-llamacpp:0.16.0-test.39")  // LLM
-    implementation("ai.runanywhere:runanywhere-onnx:0.16.0-test.39")      // STT/TTS
-}
-```
-
-### Initialization
-
-```kotlin
-// MainActivity.kt
-RunAnywhere.initialize(environment = SDKEnvironment.DEVELOPMENT)
-ModelService.registerDefaultModels()
-```
-
-### Model Registration
-
-Models are registered in `ModelService.kt`:
-
-```kotlin
-// LLM Model
-RunAnywhere.registerModel(
-    id = "smollm2-360m-instruct-q8_0",
-    name = "SmolLM2 360M Instruct Q8_0",
-    url = "https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct-GGUF/resolve/main/smollm2-360m-instruct-q8_0.gguf",
-    framework = InferenceFramework.LLAMA_CPP,
-    memoryRequirement = 400_000_000
-)
-
-// STT Model
-RunAnywhere.registerModel(
-    id = "sherpa-onnx-whisper-tiny.en",
-    name = "Sherpa Whisper Tiny (ONNX)",
-    url = "https://github.com/RunanywhereAI/sherpa-onnx/releases/download/runanywhere-models-v1/sherpa-onnx-whisper-tiny.en.tar.gz",
-    framework = InferenceFramework.ONNX,
-    category = ModelCategory.SPEECH_RECOGNITION
-)
-
-// TTS Model
-RunAnywhere.registerModel(
-    id = "vits-piper-en_US-lessac-medium",
-    name = "Piper TTS (US English - Medium)",
-    url = "https://github.com/RunanywhereAI/sherpa-onnx/releases/download/runanywhere-models-v1/vits-piper-en_US-lessac-medium.tar.gz",
-    framework = InferenceFramework.ONNX,
-    category = ModelCategory.SPEECH_SYNTHESIS
-)
-```
-
-### Usage Examples
-
-#### Chat (LLM)
-```kotlin
-val response = RunAnywhere.chat("Explain AI in simple terms")
-```
-
-#### Speech to Text (STT)
-```kotlin
-val audioData: ByteArray = recordAudio()
-val transcription = RunAnywhere.transcribe(audioData)
-```
-
-#### Text to Speech (TTS)
-```kotlin
-RunAnywhere.speak("Hello, world!")
-```
-
-#### Voice Pipeline
-```kotlin
-RunAnywhere.startVoiceSession().collect { event ->
-    when (event) {
-        is VoiceSessionEvent.Listening -> updateUI("Listening...")
-        is VoiceSessionEvent.Transcribed -> updateUI("You: ${event.text}")
-        is VoiceSessionEvent.Thinking -> updateUI("Thinking...")
-        is VoiceSessionEvent.Responded -> updateUI("AI: ${event.text}")
-        is VoiceSessionEvent.Speaking -> updateUI("Speaking...")
-    }
-}
-```
-
-## Performance
-
-### Model Sizes
-- **LLM (SmolLM2 360M)**: ~400 MB
-- **STT (Whisper Tiny)**: ~75 MB
-- **TTS (Piper)**: ~20 MB
-- **Total**: ~495 MB
-
-### Inference Speed
-- **LLM**: 5-15 tokens/sec (device dependent)
-- **STT**: Real-time transcription
-- **TTS**: Real-time synthesis
-
-### Device Requirements
-- **RAM**: Minimum 2GB recommended
-- **Storage**: 1GB free space for models
-- **CPU**: ARMv8 64-bit recommended (supports ARMv7)
-
-## Customization
-
-### Changing Models
-
-To use different models, update `ModelService.kt`:
-
-```kotlin
-companion object {
-    const val LLM_MODEL_ID = "your-model-id"
-    const val STT_MODEL_ID = "your-stt-model-id"
-    const val TTS_MODEL_ID = "your-tts-model-id"
-    
-    fun registerDefaultModels() {
-        RunAnywhere.registerModel(
-            id = LLM_MODEL_ID,
-            name = "Your Model Name",
-            url = "your-model-url",
-            framework = InferenceFramework.LLAMA_CPP
-        )
-        // ... register other models
-    }
-}
-```
-
-### Customizing UI
-
-All UI colors and themes are defined in:
-- `ui/theme/Theme.kt` - Color palette
-- `ui/theme/Type.kt` - Typography
-
-## Troubleshooting
-
-### Models Not Downloading
-- Check internet connection
-- Verify URLs in `ModelService.kt`
-- Check device storage space
-
-### App Crashes on Launch
-- Ensure minimum SDK 26
-- Check Gradle sync completed successfully
-- Verify all dependencies are downloaded
-
-### Microphone Permission Denied
-- Go to Settings → Apps → RunAnywhere Kotlin → Permissions
-- Enable "Microphone" permission
-
-### Poor Performance
-- Use a device with at least 2GB RAM
-- Close other apps to free memory
-- Consider using smaller models
-
-## Privacy & Security
-
-All AI processing happens **100% on-device**:
-- ✅ No data sent to servers
-- ✅ No internet required (after model download)
-- ✅ Complete privacy
-- ✅ Works offline
-
-## Resources
-
-- [RunAnywhere SDK Documentation](https://github.com/RunanywhereAI/runanywhere-sdks)
-- [Kotlin SDK API Reference](../../sdks/sdk/runanywhere-kotlin/Documentation.md)
-- [Release Notes](https://github.com/RunanywhereAI/runanywhere-sdks/releases/tag/v0.16.0-test.39)
-
-## License
-
-See the [LICENSE](../../LICENSE) file for details.
-
-## Support
-
-For issues and questions:
-- GitHub Issues: [runanywhere-sdks/issues](https://github.com/RunanywhereAI/runanywhere-sdks/issues)
-- Documentation: [RunAnywhere Docs](https://github.com/RunanywhereAI/runanywhere-sdks)
+- **CPU Priority Boost** - Increases process priority during inference
+- **Token Management** - Adaptive limits based on query type
+- **Streaming Responses** - Incremental UI updates
+- **Memory Management** - Proactive resource monitoring
+- **KV Cache Reset** - Prevents context overflow crashes
+- **File-Based Document Storage** - 5-10x memory savings vs in-memory
+- **Byte-Offset Random Access** - Fast chunk retrieval from disk
 
 ---
 
-**Built with ❤️ using RunAnywhere SDK v0.16.0-test.39**
+## Requirements
+
+### Minimum
+- **OS:** Android 8.0 (Oreo, API 26)
+- **RAM:** 2 GB (for SmolLM2 360M)
+- **Storage:** 1 GB free
+- **Permissions:** Storage, Microphone (optional)
+
+### Recommended
+- **OS:** Android 10+
+- **RAM:** 4 GB+
+- **Storage:** 3 GB free
+- **CPU:** Octa-core or better
+
+### Optimal
+- **OS:** Android 12+
+- **RAM:** 8 GB+
+- **Storage:** 5 GB+
+- **CPU:** Flagship chipset (Snapdragon 8 Gen, Dimensity 9000+)
+
+---
+
+## Privacy & Security
+
+### 100% Offline
+- No internet required after model download
+- All processing happens on-device
+- No data sent to servers
+- No analytics or tracking
+- Complete privacy guaranteed
+
+### Data Storage
+- Chat history: Local JSON files
+- User settings: Encrypted SharedPreferences
+- Models: Local file storage
+- Documents: File-based with byte-offset index
+- No cloud sync or backups
+
+### Permissions
+- **Storage** - Save/load models and files
+- **Microphone** - Voice assistant (optional)
+- **Internet** - Download models only (can be revoked after)
+
+---
+
+## Troubleshooting
+
+### App won't open / crashes on startup
+- Clear app cache: Settings > Apps > YouLearn > Clear Cache
+- Restart phone
+- Reinstall APK
+
+### Model download fails
+- Check internet connection
+- Ensure sufficient storage space
+- Try downloading a smaller model first
+- Restart app and retry
+
+### Model won't load
+- Check available RAM (need ~2x model size free)
+- Close other apps
+- Try smaller model
+- Restart app
+
+### AI responses very slow
+- Normal for on-device AI
+- Try smaller/faster model (SmolLM2 360M, Llama 1B)
+- Close background apps
+
+### Voice recognition not working
+- Grant microphone permission
+- Check if microphone works in other apps
+- Speak clearly in English
+- Reduce background noise
+
+### TTS not speaking
+- Go to Settings tab
+- Enable "Text-to-Speech" toggle
+- Select a voice and click "Preview Voice"
+- Check phone volume
+
+---
+
+## Development
+
+### Build from Source
+
+```bash
+# Prerequisites
+- Android Studio Hedgehog or later
+- JDK 17
+- Android SDK 35
+
+# Clone
+git clone https://github.com/YOUR_USERNAME/YouLearn.git
+cd YouLearn
+
+# Build APK
+./gradlew assembleDebug
+
+# Build release APK (signed)
+./gradlew assembleRelease
+```
+
+### Project Structure
+
+```
+YouLearn/
+├── app/
+│   ├── src/main/
+│   │   ├── java/.../
+│   │   │   ├── ui/                   # UI Screens & Components
+│   │   │   ├── services/             # Model management
+│   │   │   ├── data/                 # Data models & repositories
+│   │   │   ├── utils/                # Utilities (STT, TTS, OCR, etc.)
+│   │   │   ├── MainActivity.kt       # App entry point
+│   │   │   └── theme/                # UI theme
+│   │   ├── res/                      # Resources
+│   │   │   ├── layout/               # XML layouts
+│   │   │   ├── drawable/             # Images/icons
+│   │   │   └── values/               # Strings/colors
+│   │   └── AndroidManifest.xml
+│   └── build.gradle.kts
+├── gradle/
+├── gradlew
+└── README.md
+```
+
+### Key Dependencies
+
+```kotlin
+// AI Inference
+implementation("ai.runanywhere:runanywhere-kotlin:0.16.0-test.39")
+implementation("ai.runanywhere:runanywhere-llamacpp:0.16.0-test.39")
+implementation("ai.runanywhere:runanywhere-onnx:0.16.0-test.39")
+
+// Document Processing
+implementation("com.itextpdf:itext7-core:7.2.5")
+implementation("org.apache.poi:poi-ooxml:5.2.3")
+implementation("com.google.mlkit:text-recognition:16.0.0")
+
+// UI Components
+implementation("androidx.compose.ui:ui:1.5.4")
+implementation("androidx.compose.material3:material3:1.1.2")
+implementation("androidx.navigation:navigation-compose:2.7.5")
+
+// Kotlin
+implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+```
+
+---
+
+## Contributing
+
+Contributions are welcome! Here's how:
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/AmazingFeature`
+3. Commit your changes: `git commit -m 'Add some AmazingFeature'`
+4. Push to the branch: `git push origin feature/AmazingFeature`
+5. Open a Pull Request
+
+### Areas for Contribution
+- Add more language support
+- UI/UX improvements
+- Bug fixes
+- iOS version (React Native / Flutter)
+- Desktop version (Electron)
+- Documentation improvements
+
+---
+
+## License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+```
+MIT License
+
+Copyright (c) 2025 YouLearn AI Study Companion
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+---
+
+## Team
+
+<div align="center">
+
+### 👥 Meet the Developers
+
+| Name | Role | GitHub |
+|------|------|--------|
+| **Tabish Ansari** | Team Leader | [![GitHub](https://img.shields.io/badge/GitHub-MdTabish24-181717?style=for-the-badge&logo=github)](https://github.com/MdTabish24) |
+| **Sumit Dubey** | Developer | [![GitHub](https://img.shields.io/badge/GitHub-Sumit0ubey-181717?style=for-the-badge&logo=github)](https://github.com/Sumit0ubey) |
+| **Shahid Shaikh** | Developer | [![GitHub](https://img.shields.io/badge/GitHub-SnapTexas-181717?style=for-the-badge&logo=github)](https://github.com/SnapTexas) |
+| **Tanu Pal** | Developer | [![GitHub](https://img.shields.io/badge/GitHub-tanutech404-181717?style=for-the-badge&logo=github)](https://github.com/tanutech404) |
+
+</div>
+
+---
+
+## Acknowledgments
+
+- [RunAnywhere SDK](https://github.com/RunanywhereAI/runanywhere-sdks) - On-device AI inference
+- [llama.cpp](https://github.com/ggerganov/llama.cpp) - LLM inference engine
+- [Google ML Kit](https://developers.google.com/ml-kit) - Image analysis & OCR
+- [iText7](https://itextpdf.com/) - PDF processing
+- [Apache POI](https://poi.apache.org/) - Document parsing
+- Hugging Face - AI model hosting
+
+---
+
+## Support & Contact
+
+### Issues & Bugs
+- [GitHub Issues](https://github.com/YOUR_USERNAME/YouLearn/issues)
+- Include: Device model, Android version, error logs
+
+### Feature Requests
+- [GitHub Discussions](https://github.com/YOUR_USERNAME/YouLearn/discussions)
+- Describe use case and expected behavior
+
+---
+
+## Changelog
+
+### v1.0.0 (February 2025)
+- Initial release
+- 6 AI models supported
+- Voice assistant with 10+ accents
+- Document analysis (PDF, DOCX, PPTX)
+- Audio transcription & summarization
+- Study session management
+- PDF export with diagrams
+- 100% offline operation
+
+---
+
+<div align="center">
+
+**Made with ❤️ for offline AI learning**
+
+**Star this repo if you found it useful!**
+
+[Back to Top](#youlearn---100-offline-ai-study-companion)
+
+</div>

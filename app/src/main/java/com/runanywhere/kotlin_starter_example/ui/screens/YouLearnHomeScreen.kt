@@ -74,9 +74,9 @@ fun YouLearnHomeScreen(
                     painter = painterResource(id = R.drawable.app_logo),
                     contentDescription = "YouLearn Logo",
                     modifier = Modifier
-                        .size(88.dp)
-                        .clip(RoundedCornerShape(28.dp)),
-                    contentScale = ContentScale.Crop
+                        .size(72.dp)
+                        .clip(RoundedCornerShape(20.dp)),
+                    contentScale = ContentScale.Fit
                 )
 
                 Spacer(Modifier.height(20.dp))
