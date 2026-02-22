@@ -17,7 +17,7 @@
 <img src="https://img.shields.io/badge/Download-YouLearn%20APK-brightgreen?style=for-the-badge&logo=android" alt="Download APK" width="250">
 </a>
 
-**Latest Version:** v1.0.0 | **Size:** ~50 MB | **Android:** 8.0+
+**Latest Version:** v1.0.0 | **Size:** ~105 MB | **Android:** 8.0+
 
 [Features](#features) • [Installation](#installation) • [Usage](#usage) • [Models](#ai-models) • [Screenshots](#screenshots)
 
