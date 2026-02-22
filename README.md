@@ -2,7 +2,7 @@
 
 <div align="center">
 
-<img src="app/src/main/res/drawable/app_logo.png" width="200" alt="YouLearn Logo">
+<img src="app/src/main/res/drawable/app_launch.gif" width="200" alt="YouLearn Logo">
 
 **Your Personal AI Study Assistant - 100% Offline & Private**
 
@@ -13,11 +13,11 @@
 
 ### 📥 Download Now
 
-<a href="https://github.com/YOUR_USERNAME/YouLearn/releases/download/v1.0.0/YouLearn.apk">
+<a href="https://github.com/MdTabish24/kotlin-starter-example/releases/download/v1.0.0/app-release.apk">
 <img src="https://img.shields.io/badge/Download-YouLearn%20APK-brightgreen?style=for-the-badge&logo=android" alt="Download APK" width="250">
 </a>
 
-**Latest Version:** v1.0.0 | **Size:** ~500 MB | **Android:** 8.0+
+**Latest Version:** v1.0.0 | **Size:** ~50 MB | **Android:** 8.0+
 
 [Features](#features) • [Installation](#installation) • [Usage](#usage) • [Models](#ai-models) • [Screenshots](#screenshots)
 
@@ -52,7 +52,7 @@ With **6+ AI models**, voice recognition, document analysis, and intelligent not
 </td>
 <td width="40%">
 
-<img src="app/src/main/res/drawable/chat_logo.png" width="100%" alt="AI Chat">
+<img src="app/src/main/res/drawable/chat_interface.jpg" width="100%" alt="AI Chat">
 
 </td>
 </tr>
@@ -77,7 +77,7 @@ With **6+ AI models**, voice recognition, document analysis, and intelligent not
 </td>
 <td width="40%">
 
-<img src="app/src/main/res/drawable/app_background.jpg" width="100%" alt="Voice Assistant">
+<img src="app/src/main/res/drawable/voice.jpg" width="100%" alt="Voice Assistant">
 
 </td>
 </tr>
@@ -102,7 +102,7 @@ With **6+ AI models**, voice recognition, document analysis, and intelligent not
 </td>
 <td width="40%">
 
-<img src="app/src/main/res/drawable/app_logo.png" width="100%" alt="Document Analysis">
+<img src="app/src/main/res/drawable/doc.jpg" width="100%" alt="Document Analysis">
 
 </td>
 </tr>
@@ -126,7 +126,7 @@ With **6+ AI models**, voice recognition, document analysis, and intelligent not
 </td>
 <td width="40%">
 
-<img src="app/src/main/res/drawable/chat_logo.png" width="100%" alt="Audio Notes">
+<img src="app/src/main/res/drawable/audio.jpg" width="100%" alt="Audio Notes">
 
 </td>
 </tr>
@@ -146,12 +146,14 @@ With **6+ AI models**, voice recognition, document analysis, and intelligent not
 - **Document Attachment** - Attach PDFs, DOCX, images per session
 - **Auto-Save** - Saves every 5 seconds
 - **Smart Notes** - Markdown-based note-taking
-- **PDF Export** - Generate professional study notes PDFs
+- **Key Points Generation** - Long-press any AI response to auto-generate bullet-point summaries
+- **Visual Diagrams** - Long-press to generate Mermaid flowcharts from AI responses
+- **PDF Export** - Generate professional study notes PDFs with embedded diagrams
 
 </td>
 <td width="40%">
 
-<img src="app/src/main/res/drawable/app_background.jpg" width="100%" alt="Session Management">
+<img src="app/src/main/res/drawable/session.jpg" width="100%" alt="Session Management">
 
 </td>
 </tr>
@@ -176,11 +178,20 @@ With **6+ AI models**, voice recognition, document analysis, and intelligent not
 </td>
 <td width="40%">
 
-<img src="app/src/main/res/drawable/app_logo.png" width="100%" alt="Settings">
+<img src="app/src/main/res/drawable/settings.jpg" width="100%" alt="Settings">
 
 </td>
 </tr>
 </table>
+
+### 📊 Advanced Features
+
+- **Key Points Extraction** - Long-press any AI response to generate concise bullet-point summaries
+- **Visual Diagram Generation** - Create Mermaid flowcharts from AI explanations
+- **Diagram Preview** - View generated diagrams in full-screen with zoom
+- **Diagram Export** - Include diagrams in PDF exports
+- **Smart Formatting** - Markdown support in responses (bold, italic, code blocks)
+- **Copy to Clipboard** - Long-press to copy any message
 
 ### System & Performance
 
@@ -219,8 +230,8 @@ YouLearn supports **6 powerful AI models** ranging from lightweight to heavy:
 
 ### Method 1: Download APK (Recommended)
 
-1. Go to [GitHub Releases](https://github.com/YOUR_USERNAME/YouLearn/releases)
-2. Download `YouLearn-v1.0.0.apk` (~500 MB)
+1. Go to [GitHub Releases](https://github.com/MdTabish24/kotlin-starter-example/releases)
+2. Download `app-release.apk` (~50 MB)
 3. Enable "Install from unknown sources" in phone settings
 4. Install the APK
 5. Open YouLearn and download an AI model
@@ -229,14 +240,14 @@ YouLearn supports **6 powerful AI models** ranging from lightweight to heavy:
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/YouLearn.git
-cd YouLearn
+git clone https://github.com/MdTabish24/kotlin-starter-example.git
+cd kotlin-starter-example
 
 # Build the APK
-./gradlew assembleDebug
+./gradlew assembleRelease
 
 # Install on connected device
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r app/build/outputs/apk/release/app-release.apk
 ```
 
 ---
@@ -291,7 +302,10 @@ AI: [Uses context from previous answer to explain differences]
 ```
 
 **Actions:**
-- Long-press any message to copy it
+- Long-press any message to see options menu:
+  - **Copy** - Copy message to clipboard
+  - **Generate Key Points** - Extract bullet-point summary
+  - **Generate Diagram** - Create visual flowchart
 - Tap "+ New" button to start fresh conversation
 - Tap model icon to switch models mid-conversation
 
@@ -344,6 +358,35 @@ AI: The paper presents three main findings: 1) ...
 - Full Transcription - Complete text of audio
 - AI Summary - Concise overview
 - Key Points - Important topics
+
+---
+
+### Key Points & Diagrams
+
+**Generate Key Points:**
+1. Long-press any AI response
+2. Select "Generate Key Points"
+3. AI extracts main ideas as bullet points
+4. Key points appear below the message
+
+**Generate Visual Diagrams:**
+1. Long-press any AI response
+2. Select "Generate Diagram/Visual"
+3. AI creates Mermaid flowchart
+4. Tap diagram to view full-screen
+5. Diagrams included in PDF exports
+
+**Example:**
+```
+You: Explain how photosynthesis works
+
+AI: [Detailed explanation of photosynthesis process]
+
+[Long-press → Generate Diagram]
+
+Result: Flowchart showing:
+Sunlight → Chlorophyll → Light Reactions → Calvin Cycle → Glucose
+```
 
 ---
 
@@ -476,44 +519,6 @@ AI: The paper presents three main findings: 1) ...
 
 ---
 
-## Troubleshooting
-
-### App won't open / crashes on startup
-- Clear app cache: Settings > Apps > YouLearn > Clear Cache
-- Restart phone
-- Reinstall APK
-
-### Model download fails
-- Check internet connection
-- Ensure sufficient storage space
-- Try downloading a smaller model first
-- Restart app and retry
-
-### Model won't load
-- Check available RAM (need ~2x model size free)
-- Close other apps
-- Try smaller model
-- Restart app
-
-### AI responses very slow
-- Normal for on-device AI
-- Try smaller/faster model (SmolLM2 360M, Llama 1B)
-- Close background apps
-
-### Voice recognition not working
-- Grant microphone permission
-- Check if microphone works in other apps
-- Speak clearly in English
-- Reduce background noise
-
-### TTS not speaking
-- Go to Settings tab
-- Enable "Text-to-Speech" toggle
-- Select a voice and click "Preview Voice"
-- Check phone volume
-
----
-
 ## Development
 
 ### Build from Source
@@ -525,38 +530,14 @@ AI: The paper presents three main findings: 1) ...
 - Android SDK 35
 
 # Clone
-git clone https://github.com/YOUR_USERNAME/YouLearn.git
-cd YouLearn
+git clone https://github.com/MdTabish24/kotlin-starter-example.git
+cd kotlin-starter-example
 
 # Build APK
-./gradlew assembleDebug
+./gradlew assembleRelease
 
 # Build release APK (signed)
 ./gradlew assembleRelease
-```
-
-### Project Structure
-
-```
-YouLearn/
-├── app/
-│   ├── src/main/
-│   │   ├── java/.../
-│   │   │   ├── ui/                   # UI Screens & Components
-│   │   │   ├── services/             # Model management
-│   │   │   ├── data/                 # Data models & repositories
-│   │   │   ├── utils/                # Utilities (STT, TTS, OCR, etc.)
-│   │   │   ├── MainActivity.kt       # App entry point
-│   │   │   └── theme/                # UI theme
-│   │   ├── res/                      # Resources
-│   │   │   ├── layout/               # XML layouts
-│   │   │   ├── drawable/             # Images/icons
-│   │   │   └── values/               # Strings/colors
-│   │   └── AndroidManifest.xml
-│   └── build.gradle.kts
-├── gradle/
-├── gradlew
-└── README.md
 ```
 
 ### Key Dependencies
@@ -580,26 +561,6 @@ implementation("androidx.navigation:navigation-compose:2.7.5")
 // Kotlin
 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 ```
-
----
-
-## Contributing
-
-Contributions are welcome! Here's how:
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/AmazingFeature`
-3. Commit your changes: `git commit -m 'Add some AmazingFeature'`
-4. Push to the branch: `git push origin feature/AmazingFeature`
-5. Open a Pull Request
-
-### Areas for Contribution
-- Add more language support
-- UI/UX improvements
-- Bug fixes
-- iOS version (React Native / Flutter)
-- Desktop version (Electron)
-- Documentation improvements
 
 ---
 
@@ -643,8 +604,6 @@ SOFTWARE.
 |------|------|--------|
 | **Tabish Ansari** | Team Leader | [![GitHub](https://img.shields.io/badge/GitHub-MdTabish24-181717?style=for-the-badge&logo=github)](https://github.com/MdTabish24) |
 | **Sumit Dubey** | Developer | [![GitHub](https://img.shields.io/badge/GitHub-Sumit0ubey-181717?style=for-the-badge&logo=github)](https://github.com/Sumit0ubey) |
-| **Shahid Shaikh** | Developer | [![GitHub](https://img.shields.io/badge/GitHub-SnapTexas-181717?style=for-the-badge&logo=github)](https://github.com/SnapTexas) |
-| **Tanu Pal** | Developer | [![GitHub](https://img.shields.io/badge/GitHub-tanutech404-181717?style=for-the-badge&logo=github)](https://github.com/tanutech404) |
 
 </div>
 
@@ -664,11 +623,11 @@ SOFTWARE.
 ## Support & Contact
 
 ### Issues & Bugs
-- [GitHub Issues](https://github.com/YOUR_USERNAME/YouLearn/issues)
+- [GitHub Issues](https://github.com/MdTabish24/kotlin-starter-example/issues)
 - Include: Device model, Android version, error logs
 
 ### Feature Requests
-- [GitHub Discussions](https://github.com/YOUR_USERNAME/YouLearn/discussions)
+- [GitHub Discussions](https://github.com/MdTabish24/kotlin-starter-example/discussions)
 - Describe use case and expected behavior
 
 ---
@@ -682,7 +641,9 @@ SOFTWARE.
 - Document analysis (PDF, DOCX, PPTX)
 - Audio transcription & summarization
 - Study session management
-- PDF export with diagrams
+- Key points generation from AI responses
+- Visual diagram generation (Mermaid flowcharts)
+- PDF export with embedded diagrams
 - 100% offline operation
 
 ---

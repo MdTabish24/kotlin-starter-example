@@ -22,8 +22,18 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("../youlearn-release.keystore")
+            storePassword = "youlearn2025"
+            keyAlias = "youlearn"
+            keyPassword = "youlearn2025"
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
