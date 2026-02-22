@@ -1012,24 +1012,7 @@ fun SessionWorkspaceScreen(
                             temp = 0.7f
                         ) { currentText ->
                             streamingResponse = currentText
-
-                            // ── Detect first complete sentence → start TTS immediately ──
-                            if (!firstSentSpoken && currentText.length > 10) {
-                                for (i in 10 until currentText.length) {
-                                    if (currentText[i] in ".!?" &&
-                                        (i + 1 >= currentText.length || currentText[i + 1].isWhitespace())) {
-                                        val firstSent = currentText.substring(0, i + 1).trim()
-                                        if (firstSent.isNotBlank() && accentTTS.isReady) {
-                                            accentTTS.speakAsync(firstSent, prefs.ttsAccent, prefs.ttsSpeed, prefs.ttsPitch)
-                                            firstSentSpoken = true
-                                            firstSentEnd = i + 1
-                                            voiceState = VoiceSessionState.SPEAKING
-                                            isSpeaking = true
-                                        }
-                                        break
-                                    }
-                                }
-                            }
+                            // Note: We'll speak AFTER full generation, not during streaming
                         }
                         bridgeResult.fullText
                     } catch (e: Exception) {
@@ -1062,24 +1045,14 @@ fun SessionWorkspaceScreen(
                     try { listState.animateScrollToItem(maxOf(0, messages.size - 1)) } catch (_: Exception) {}
                     if (voiceState == VoiceSessionState.IDLE) break
 
-                    // ── Speak remaining text (after first sentence) ──
+                    // ── NOW speak the complete response (after full generation) ──
                     voiceState = VoiceSessionState.SPEAKING
                     isSpeaking = true
                     try {
                         if (accentTTS.isReady) {
                             val trimmedFull = fullResponse.trim()
-                            if (firstSentSpoken && trimmedFull.length > firstSentEnd) {
-                                // Queue remainder after first sentence
-                                val remainder = trimmedFull.substring(firstSentEnd).trim()
-                                if (remainder.isNotBlank()) {
-                                    accentTTS.speakQueued(remainder, prefs.ttsAccent, prefs.ttsSpeed, prefs.ttsPitch)
-                                }
-                            } else if (!firstSentSpoken) {
-                                // No sentence boundary found during streaming — speak entire response now
-                                accentTTS.speakAsync(trimmedFull.take(500), prefs.ttsAccent, prefs.ttsSpeed, prefs.ttsPitch)
-                            }
-                            // Wait for all TTS speech to finish
-                            accentTTS.waitUntilDone()
+                            // Use speakAndWait (suspending) instead of speakAsync to properly wait for TTS completion
+                            accentTTS.speakAndWait(trimmedFull.take(500), prefs.ttsAccent, prefs.ttsSpeed, prefs.ttsPitch)
                         }
                     } catch (_: Exception) {
                     } finally {
