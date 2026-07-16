@@ -74,6 +74,7 @@ import com.runanywhere.kotlin_starter_example.utils.AndroidSTTManager
 import com.runanywhere.kotlin_starter_example.utils.AudioFileTranscriber
 import com.runanywhere.kotlin_starter_example.utils.PdfExportManager
 import com.runanywhere.kotlin_starter_example.utils.PdfQAEntry
+import com.runanywhere.kotlin_starter_example.utils.StreamingUiUpdateThrottler
 import com.runanywhere.kotlin_starter_example.R
 import android.provider.OpenableColumns
 import android.widget.Toast
@@ -458,16 +459,36 @@ fun SessionWorkspaceScreen(
         val sb = StringBuilder()
         var tokenCount = 0
         val handler = android.os.Handler(android.os.Looper.getMainLooper())
+        val updateThrottler = StreamingUiUpdateThrottler(minimumIntervalMs = 50)
+        val updateLock = Any()
+        val uiUpdateToken = Any()
+        var latestText = ""
 
         try {
             val result = CppBridgeLLM.generateStream(prompt, config) { token ->
                 sb.append(token)
                 tokenCount++
-                // Post UI update to main thread without blocking native generate thread
-                val currentText = sb.toString()
-                handler.post { onToken(currentText) }
+                // Coalesce token callbacks so Markdown is not re-parsed for every token.
+                // The latest snapshot is retained, so no generated content is lost.
+                synchronized(updateLock) {
+                    latestText = sb.toString()
+                    val nowMs = android.os.SystemClock.uptimeMillis()
+                    val delayMs = updateThrottler.scheduleDelayMs(nowMs)
+                    if (delayMs != null) {
+                        handler.postAtTime(Runnable {
+                            val textForUi = synchronized(updateLock) {
+                                updateThrottler.markDispatched(android.os.SystemClock.uptimeMillis())
+                                latestText
+                            }
+                            onToken(textForUi)
+                        }, uiUpdateToken, nowMs + delayMs)
+                    }
+                }
                 true // continue generating
             }
+
+            // Avoid a delayed preview update appearing after the final response is committed.
+            handler.removeCallbacksAndMessages(uiUpdateToken)
 
             val genTime = System.currentTimeMillis() - startTime
             android.util.Log.d("BridgeGen", "✅ Done: ${result.tokensGenerated} tokens, ${result.tokensPerSecond} tok/s, ${genTime}ms")
@@ -479,6 +500,7 @@ fun SessionWorkspaceScreen(
                 tokensPerSecond = result.tokensPerSecond
             )
         } catch (e: Exception) {
+            handler.removeCallbacksAndMessages(uiUpdateToken)
             val genTime = System.currentTimeMillis() - startTime
             android.util.Log.e("BridgeGen", "❌ Bridge generate failed: ${e.message}, falling back", e)
             // Return whatever we collected so far
